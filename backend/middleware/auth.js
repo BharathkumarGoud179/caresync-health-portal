@@ -46,7 +46,6 @@ const protect = async (req, res, next) => {
   }
 };
 
-
 // Grant access to specific roles
 const authorize = (...roles) => {
   return (req, res, next) => {
@@ -81,29 +80,24 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter for medical reports: PDF, JPEG, JPG, PNG, WEBP
-const allowedMimeTypes = [
-  'application/pdf',
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp'
-];
-const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.webp'];
-
+// File filter for medical reports: PDF, JPEG, JPG, PNG, WEBP, DICOM
 const fileFilter = (req, file, cb) => {
-  const extension = path.extname(file.originalname || '').toLowerCase();
-  const hasAllowedType = allowedMimeTypes.includes(file.mimetype);
-  const hasAllowedExtension = allowedExtensions.includes(extension);
-
-  if (hasAllowedType && hasAllowedExtension) {
+  const allowedTypes = [
+    'application/pdf',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp'
+  ];
+  if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    const error = new Error(
-      'Invalid file type! Only PDF and images (JPG, PNG, WEBP) are allowed for medical reports.'
+    cb(
+      new Error(
+        'Invalid file type! Only PDF and images (JPG, PNG, WEBP) are allowed for medical reports.'
+      ),
+      false
     );
-    error.status = 400;
-    cb(error, false);
   }
 };
 

@@ -4,7 +4,9 @@ const {
   uploadReport,
   getMyReports,
   getPatientReportsForDoctor,
-  deleteReport
+  deleteReport,
+  analyzeReportAI,
+  getReportById
 } = require('../controllers/reportController');
 const { protect, authorize, uploadReport: uploadMiddleware } = require('../middleware/auth');
 
@@ -17,7 +19,13 @@ router.get('/my-reports', protect, authorize('patient'), getMyReports);
 // Doctor views a patient's reports
 router.get('/patient/:patientId', protect, authorize('doctor'), getPatientReportsForDoctor);
 
+// AI-powered medical lab report analysis
+router.post('/:id/analyze-ai', protect, analyzeReportAI);
+
+// Get single report with AI analysis details
+router.get('/:id', protect, getReportById);
+
 // Patient deletes report
-router.delete('/:id', protect, authorize('patient'), deleteReport);
+router.delete('/:id', protect, deleteReport);
 
 module.exports = router;

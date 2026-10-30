@@ -23,6 +23,25 @@
       </a>
 
       <div class="d-flex align-items-center gap-3">
+        <!-- Notification Dropdown -->
+        <div class="dropdown">
+          <button class="btn btn-light position-relative rounded-circle border shadow-xs p-2" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+            <i class="bi bi-bell-fill text-secondary fs-6"></i>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notificationBadge">
+              0
+            </span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0 rounded-4" style="width: 340px; max-height: 440px; overflow: hidden;" aria-labelledby="notificationDropdown">
+            <div class="d-flex align-items-center justify-content-between p-3 border-bottom bg-light">
+              <span class="fw-bold small mb-0"><i class="bi bi-bell me-1 text-primary"></i>Notifications</span>
+              <button class="btn btn-link btn-sm p-0 text-decoration-none small text-primary" onclick="markAllNotificationsRead()">Mark all read</button>
+            </div>
+            <div id="notifications-list" class="overflow-auto" style="max-height: 350px;">
+              <div class="text-center py-4 text-muted small">No notifications yet.</div>
+            </div>
+          </div>
+        </div>
+
         <div class="text-end d-none d-md-block">
           <span class="fw-bold d-block small" id="patient-name-display">Loading...</span>
           <span class="badge bg-light text-muted border">Patient</span>
@@ -133,7 +152,7 @@
         <!-- Adherence Progress Bar -->
         <div class="card p-3 custom-card mb-4">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-bold text-dark"><i class="bi bi-trophy text-warning me-2"></i>Overall Adherence Progress</span>
+            <span class="fw-bold text-dark"><i class="bi bi-trophy text-warning me-2"></i>Daily Adherence Progress</span>
             <small class="text-muted">Keep this green to aid rapid recovery</small>
           </div>
           <div class="compliance-progress mb-1">
@@ -144,7 +163,7 @@
         <!-- Filter Buttons & Header -->
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="fw-bold text-dark mb-0">
-            <i class="bi bi-list-task me-2 text-teal"></i>Your Assigned Care Routine
+            <i class="bi bi-list-task me-2 text-teal"></i>Today's Assigned Routine
           </h5>
           <div class="btn-group btn-group-sm" role="group">
             <button class="btn btn-outline-secondary task-filter-btn active" data-filter="all" onclick="filterTasks('all')">All</button>
@@ -181,9 +200,7 @@
           <button class="btn btn-sm btn-outline-dark report-filter-btn" data-category="Radiology / X-Ray / Scan" onclick="filterReports('Radiology / X-Ray / Scan')">Radiology & X-Ray</button>
           <button class="btn btn-sm btn-outline-dark report-filter-btn" data-category="Prescription" onclick="filterReports('Prescription')">Prescriptions</button>
           <button class="btn btn-sm btn-outline-dark report-filter-btn" data-category="Discharge Summary" onclick="filterReports('Discharge Summary')">Discharge Summary</button>
-          <button class="btn btn-sm btn-outline-dark report-filter-btn" data-category="Pathology" onclick="filterReports('Pathology')">Pathology</button>
           <button class="btn btn-sm btn-outline-dark report-filter-btn" data-category="Cardiology / ECG" onclick="filterReports('Cardiology / ECG')">ECG & Cardiology</button>
-          <button class="btn btn-sm btn-outline-dark report-filter-btn" data-category="Other" onclick="filterReports('Other')">Other</button>
         </div>
 
         <!-- Reports List Container -->
@@ -210,35 +227,32 @@
   </main>
 
   <!-- Upload Report Modal -->
-  <div class="modal fade" id="uploadReportModal" tabindex="-1" aria-labelledby="uploadReportModalLabel" aria-hidden="true">
+  <div class="modal fade" id="uploadReportModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow">
         <div class="modal-header bg-teal text-white" style="background-color: #0f766e;">
-          <h5 class="modal-title fw-bold" id="uploadReportModalLabel"><i class="bi bi-cloud-arrow-up me-2"></i>Upload Medical Report</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-cloud-arrow-up me-2"></i>Upload Medical Report</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
-          <form id="upload-report-form" novalidate>
-            <div id="upload-report-error" class="alert alert-danger d-none py-2" role="alert"></div>
-
+          <form id="upload-report-form">
             <!-- Drag & Drop Zone -->
-            <div class="drop-zone mb-3" id="report-drop-zone" role="button" tabindex="0" aria-label="Choose a medical report file">
+            <div class="drop-zone mb-3" id="report-drop-zone">
               <i class="bi bi-cloud-upload display-4 text-teal" style="color: #0f766e;"></i>
               <h6 class="mt-2 fw-semibold">Drag & drop your file here, or click to browse</h6>
               <p class="text-muted small mb-1">Supported formats: PDF, JPG, PNG, WEBP (Max 15 MB)</p>
               <div id="selected-file-name" class="mt-2"></div>
-              <input type="file" id="report-file" name="file" class="d-none" accept=".pdf,.jpg,.jpeg,.png,.webp">
+              <input type="file" id="report-file" name="file" class="d-none" accept=".pdf,image/*" required>
             </div>
 
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="report-title">Report Title / Description</label>
-                <input type="text" id="report-title" name="title" class="form-control" placeholder="e.g. Complete Blood Count (CBC)" maxlength="120" required aria-describedby="report-title-error">
-                <div class="invalid-feedback" id="report-title-error"></div>
+                <label class="form-label small fw-semibold">Report Title / Description</label>
+                <input type="text" name="title" class="form-control" placeholder="e.g. Complete Blood Count (CBC)" required>
               </div>
               <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="report-category">Category</label>
-                <select id="report-category" name="category" class="form-select" required>
+                <label class="form-label small fw-semibold">Category</label>
+                <select name="category" class="form-select" required>
                   <option value="Blood Test" selected>Blood Test</option>
                   <option value="Radiology / X-Ray / Scan">Radiology / X-Ray / Scan</option>
                   <option value="Prescription">Prescription</option>
@@ -249,17 +263,16 @@
                 </select>
               </div>
               <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="report-date">Test / Report Date</label>
-                <input type="date" id="report-date" name="reportDate" class="form-control" required aria-describedby="report-date-error">
-                <div class="invalid-feedback" id="report-date-error"></div>
+                <label class="form-label small fw-semibold">Test / Report Date</label>
+                <input type="date" name="reportDate" class="form-control" required value="<?php echo date('Y-m-d'); ?>">
               </div>
               <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="report-lab">Lab or Hospital Name</label>
-                <input type="text" id="report-lab" name="labOrHospital" class="form-control" placeholder="e.g. Metropolis Diagnostics, Apollo Clinic" maxlength="120">
+                <label class="form-label small fw-semibold">Lab or Hospital Name</label>
+                <input type="text" name="labOrHospital" class="form-control" placeholder="e.g. Metropolis Diagnostics, Apollo Clinic">
               </div>
               <div class="col-12">
-                <label class="form-label small fw-semibold" for="report-notes">Any notes or symptoms at the time of test</label>
-                <textarea id="report-notes" name="notes" class="form-control" rows="2" maxlength="1000" placeholder="e.g. Conducted during high fever and body ache..."></textarea>
+                <label class="form-label small fw-semibold">Any notes or symptoms at the time of test</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Conducted during high fever and body ache..."></textarea>
               </div>
             </div>
 
@@ -276,11 +289,11 @@
   </div>
 
   <!-- Select Doctor Modal -->
-  <div class="modal fade" id="selectDoctorModal" tabindex="-1" aria-labelledby="selectDoctorModalLabel" aria-hidden="true">
+  <div class="modal fade" id="selectDoctorModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <div class="modal-header border-bottom">
-          <h5 class="modal-title fw-bold" id="selectDoctorModalLabel"><i class="bi bi-hospital me-2 text-teal"></i>Select Your Primary Doctor</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-hospital me-2 text-teal"></i>Select Your Primary Doctor</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-3">
@@ -296,8 +309,117 @@
   <!-- Toast Notification Container -->
   <div id="toast-container"></div>
 
+  <!-- ============================================== -->
+  <!-- REAL-TIME CHAT & WEBRTC CALLING MODALS         -->
+  <!-- ============================================== -->
+
+  <!-- Chat Modal -->
+  <div class="modal fade" id="chatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" style="height: 600px;">
+        <div class="modal-header bg-gradient-teal text-white py-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="stat-icon bg-white text-teal rounded-circle" style="width: 40px; height: 40px; font-size: 1.2rem;">
+              <i class="bi bi-chat-dots-fill"></i>
+            </div>
+            <div>
+              <h6 class="modal-title fw-bold mb-0" id="chat-header-name">Doctor Consultation</h6>
+              <small class="opacity-75" id="chat-header-role">Approved Healthcare Provider</small>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-light rounded-circle" onclick="startVoiceCallWithDoctor()" title="Voice Call">
+              <i class="bi bi-telephone-fill text-primary"></i>
+            </button>
+            <button class="btn btn-sm btn-light rounded-circle" onclick="startVideoCallWithDoctor()" title="Video Call">
+              <i class="bi bi-camera-video-fill text-success"></i>
+            </button>
+            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+
+        <div class="modal-body p-3 bg-light d-flex flex-column" style="overflow: hidden;">
+          <div id="chat-messages-container" class="flex-grow-1 overflow-auto p-2" style="max-height: 440px;"></div>
+          <div class="pt-2 border-top bg-white px-2 rounded-3 mt-auto shadow-xs">
+            <form onsubmit="event.preventDefault(); sendCurrentChatMessage();" class="d-flex gap-2 align-items-center py-2">
+              <input type="text" id="chat-input-field" class="form-control border-0" placeholder="Type a message or medical question..." autocomplete="off">
+              <button type="submit" class="btn btn-teal px-3">
+                <i class="bi bi-send-fill me-1"></i>Send
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active WebRTC Call Modal -->
+  <div class="modal fade" id="activeCallModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg bg-dark text-white rounded-4 overflow-hidden">
+        <div class="modal-header border-0 bg-dark py-2 px-3">
+          <div>
+            <h6 class="mb-0 fw-bold" id="active-call-user-name">Clinical Call</h6>
+            <small class="text-success"><span class="badge bg-teal me-1" id="active-call-type-badge">HD Video</span> <span id="active-call-status">Connecting...</span></small>
+          </div>
+        </div>
+
+        <div class="modal-body p-0 position-relative bg-black d-flex align-items-center justify-content-center" style="min-height: 420px;">
+          <video id="remote-video" autoplay playsinline style="width: 100%; height: 420px; object-fit: cover;"></video>
+          <video id="local-video" autoplay playsinline muted style="position: absolute; top: 15px; right: 15px; width: 140px; height: 105px; border-radius: 12px; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10;"></video>
+          <div id="call-avatar-placeholder" class="flex-column align-items-center justify-content-center" style="display: none; height: 420px;">
+            <div class="stat-icon bg-teal text-white rounded-circle shadow-lg mb-3" style="width: 90px; height: 90px; font-size: 2.5rem;">
+              <i class="bi bi-person-fill"></i>
+            </div>
+            <h5 class="fw-bold mb-1">Encrypted Voice Consultation</h5>
+            <small class="text-white-50">WebRTC Peer-to-Peer Audio</small>
+          </div>
+        </div>
+
+        <div class="modal-footer justify-content-center border-0 bg-dark py-3 gap-3">
+          <button id="btn-call-mute" class="btn btn-light btn-lg rounded-circle" onclick="toggleCallAudio()" title="Mute/Unmute">
+            <i class="bi bi-mic-fill"></i>
+          </button>
+          <button id="btn-call-video" class="btn btn-light btn-lg rounded-circle" onclick="toggleCallVideo()" title="Camera On/Off">
+            <i class="bi bi-camera-video-fill"></i>
+          </button>
+          <button class="btn btn-danger btn-lg rounded-circle px-4 shadow" onclick="endCall()" title="End Call">
+            <i class="bi bi-telephone-x-fill"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incoming Call Modal -->
+  <div class="modal fade" id="incomingCallModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 shadow-lg text-center p-4 rounded-4">
+        <div class="mb-3">
+          <div class="stat-icon bg-primary text-white rounded-circle mx-auto mb-2 shadow" style="width: 70px; height: 70px; font-size: 2rem; animation: floatSlow 2s ease-in-out infinite;">
+            <i class="bi bi-telephone-inbound-fill"></i>
+          </div>
+          <h5 class="fw-bold mb-0" id="incoming-caller-name">Doctor</h5>
+          <span class="badge bg-primary-subtle text-primary mt-1" id="incoming-call-type">Incoming Call</span>
+        </div>
+        <p class="small text-muted mb-4">Doctor is requesting an encrypted tele-health consultation.</p>
+        <div class="d-flex justify-content-center gap-3">
+          <button class="btn btn-danger rounded-pill px-4" onclick="rejectIncomingCall()">
+            <i class="bi bi-telephone-x me-1"></i>Decline
+          </button>
+          <button class="btn btn-success rounded-pill px-4 shadow" onclick="answerIncomingCall()">
+            <i class="bi bi-telephone-fill me-1"></i>Accept
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Socket.io & Real-time WebRTC -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/chat-webrtc.js"></script>
   <!-- Custom JS -->
   <script src="/js/common.js"></script>
   <script src="/js/patient.js"></script>

@@ -1,230 +1,111 @@
-// Authentication Logic (Login, Register, Demo Accounts)
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const PHONE_PATTERN = /^\+?[0-9][0-9\s().-]{6,19}$/;
-
-const REGISTER_FIELD_MAP = {
-  name: 'reg-name',
-  email: 'reg-email',
-  password: 'reg-password',
-  phone: 'reg-phone',
-  age: 'reg-age',
-  gender: 'reg-gender',
-  bloodGroup: 'reg-blood-group',
-  allergies: 'reg-allergies',
-  specialization: 'reg-specialization',
-  hospital: 'reg-hospital',
-  licenseNumber: 'reg-license',
-  experienceYears: 'reg-experience'
-};
-
-const LOGIN_FIELD_MAP = {
-  email: 'login-email',
-  password: 'login-password'
-};
-
-const redirectForRole = (role) => {
-  window.location.href = role === 'doctor' ? '/doctor' : '/patient';
-};
-
-// Guard against a submit before DOMContentLoaded attaches the real handlers.
-// Without this, the browser's native GET submission would put form values
-// (including the password) in the URL.
-const guardAuthForm = (formId) => {
-  const form = document.getElementById(formId);
-  if (!form) return;
-
-  form.addEventListener('submit', (event) => {
-    if (form.dataset.ready !== 'true') {
-      event.preventDefault();
-      showToast('Please wait a moment while the page finishes loading.', 'info');
-    }
-  });
-};
-
-guardAuthForm('login-form');
-guardAuthForm('register-form');
-
-// Verify a stored token before redirecting away from the landing page.
-const redirectIfAlreadyLoggedIn = async () => {
-  if (window.location.pathname !== '/') return;
-
-  const token = getToken();
-  if (!token) return;
-
-  try {
-    const res = await fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const data = await readJson(res);
-    if (res.ok && data.success && data.user) {
-      setCurrentUser(data.user);
-      redirectForRole(data.user.role);
-    } else {
-      clearSession();
-    }
-  } catch (error) {
-    // Leave the visitor on the landing page if the check fails.
-  }
-};
-
-const applyServerErrors = (data, fieldMap) => {
-  if (!data || !Array.isArray(data.errors)) return;
-  data.errors.forEach(({ field, message }) => {
-    const input = document.getElementById(fieldMap[field]);
-    if (input) setFieldError(input, message);
-  });
-};
-
-const validateLoginForm = () => {
-  const form = document.getElementById('login-form');
-  const emailInput = document.getElementById('login-email');
-  const passwordInput = document.getElementById('login-password');
-
-  clearFormErrors(form);
-  let valid = true;
-  const fail = (input, message) => {
-    setFieldError(input, message);
-    valid = false;
-  };
-
-  const email = emailInput.value.trim();
-  if (!EMAIL_PATTERN.test(email)) {
-    fail(emailInput, 'Enter a valid email address.');
-  }
-  if (!passwordInput.value) {
-    fail(passwordInput, 'Enter your password.');
-  }
-
-  return valid;
-};
-
-const validateRegisterForm = () => {
-  const form = document.getElementById('register-form');
-  const role = document.getElementById('reg-role').value;
-
-  const nameInput = document.getElementById('reg-name');
-  const emailInput = document.getElementById('reg-email');
-  const phoneInput = document.getElementById('reg-phone');
-  const passwordInput = document.getElementById('reg-password');
-  const confirmInput = document.getElementById('reg-confirm-password');
-
-  clearFormErrors(form);
-  let valid = true;
-  const fail = (input, message) => {
-    setFieldError(input, message);
-    valid = false;
-  };
-
-  const name = nameInput.value.trim();
-  const email = emailInput.value.trim();
-  const phone = phoneInput.value.trim();
-  const password = passwordInput.value;
-  const confirmPassword = confirmInput.value;
-
-  if (name.length < 2 || name.length > 80) {
-    fail(nameInput, 'Name must be between 2 and 80 characters.');
-  }
-  if (!EMAIL_PATTERN.test(email)) {
-    fail(emailInput, 'Enter a valid email address.');
-  }
-  if (phone && !PHONE_PATTERN.test(phone)) {
-    fail(phoneInput, 'Enter a valid phone number (7-20 digits).');
-  }
-  if (password.length < 8) {
-    fail(passwordInput, 'Password must be at least 8 characters.');
-  } else if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-    fail(passwordInput, 'Password must include at least one letter and one number.');
-  }
-  if (confirmPassword !== password) {
-    fail(confirmInput, 'Passwords do not match.');
-  }
-
-  if (role === 'patient') {
-    const ageInput = document.getElementById('reg-age');
-    const age = ageInput.value.trim();
-    if (age !== '') {
-      const ageNumber = Number(age);
-      if (!Number.isInteger(ageNumber) || ageNumber < 0 || ageNumber > 120) {
-        fail(ageInput, 'Age must be a whole number between 0 and 120.');
-      }
-    }
-  } else {
-    const specializationInput = document.getElementById('reg-specialization');
-    const licenseInput = document.getElementById('reg-license');
-    const experienceInput = document.getElementById('reg-experience');
-
-    if (specializationInput.value.trim().length < 2) {
-      fail(specializationInput, 'Enter your medical specialization.');
-    }
-    if (licenseInput.value.trim().length < 2) {
-      fail(licenseInput, 'Enter your medical license number.');
-    }
-
-    const experience = experienceInput.value.trim();
-    if (experience !== '') {
-      const years = Number(experience);
-      if (!Number.isInteger(years) || years < 0 || years > 70) {
-        fail(experienceInput, 'Years of practice must be between 0 and 70.');
-      }
-    }
-  }
-
-  return valid;
-};
-
-const buildRegisterPayload = () => {
-  const role = document.getElementById('reg-role').value;
-  const payload = {
-    name: document.getElementById('reg-name').value.trim(),
-    email: document.getElementById('reg-email').value.trim(),
-    password: document.getElementById('reg-password').value,
-    phone: document.getElementById('reg-phone').value.trim(),
-    role
-  };
-
-  if (role === 'patient') {
-    const age = document.getElementById('reg-age').value.trim();
-    payload.age = age === '' ? undefined : Number(age);
-    payload.gender = document.getElementById('reg-gender').value;
-    payload.bloodGroup = document.getElementById('reg-blood-group').value;
-    payload.allergies = document.getElementById('reg-allergies').value.trim();
-  } else {
-    payload.specialization = document.getElementById('reg-specialization').value.trim();
-    payload.hospital = document.getElementById('reg-hospital').value.trim();
-    payload.licenseNumber = document.getElementById('reg-license').value.trim();
-    const experience = document.getElementById('reg-experience').value.trim();
-    payload.experienceYears = experience === '' ? undefined : Number(experience);
-  }
-
-  return payload;
-};
+// Authentication Logic & Strict Client-Side Form Validation
 
 document.addEventListener('DOMContentLoaded', () => {
-  redirectIfAlreadyLoggedIn();
+  // Check if already logged in, redirect accordingly
+  const user = getCurrentUser();
+  const token = getToken();
+
+  if (user && token && window.location.pathname === '/') {
+    if (user.role === 'patient') {
+      window.location.href = '/patient';
+    } else if (user.role === 'doctor') {
+      window.location.href = '/doctor';
+    }
+  }
 
   // Handle Role Switching in Register Form
   const roleSelect = document.getElementById('reg-role');
   const patientFields = document.getElementById('patient-specific-fields');
   const doctorFields = document.getElementById('doctor-specific-fields');
-  const registerForm = document.getElementById('register-form');
+  const ageInput = document.getElementById('reg-age');
 
-  if (roleSelect && patientFields && doctorFields) {
-    const updateRoleFields = () => {
-      const isDoctor = roleSelect.value === 'doctor';
-      doctorFields.classList.toggle('d-none', !isDoctor);
-      patientFields.classList.toggle('d-none', isDoctor);
+  if (roleSelect) {
+    roleSelect.addEventListener('change', () => {
+      if (roleSelect.value === 'doctor') {
+        doctorFields.classList.remove('d-none');
+        patientFields.classList.add('d-none');
+        if (ageInput) ageInput.removeAttribute('required');
+      } else {
+        patientFields.classList.remove('d-none');
+        doctorFields.classList.add('d-none');
+        if (ageInput) ageInput.setAttribute('required', 'true');
+      }
+    });
+  }
 
-      // Required is enforced by our JS validator, but keeping the DOM
-      // attribute in sync helps assistive technology.
-      document.getElementById('reg-specialization').required = isDoctor;
-      document.getElementById('reg-license').required = isDoctor;
+  // Live Password Validation Indicators
+  const passwordInput = document.getElementById('reg-password');
+  const ruleLength = document.getElementById('rule-length');
+  const ruleLetter = document.getElementById('rule-letter');
+  const ruleNumber = document.getElementById('rule-number');
+  const ruleSpecial = document.getElementById('rule-special');
 
-      clearFormErrors(registerForm);
-    };
+  if (passwordInput) {
+    passwordInput.addEventListener('input', () => {
+      const val = passwordInput.value;
+      const isLength = val.length >= 8;
+      const isLetter = /[a-zA-Z]/.test(val);
+      const isNumber = /[0-9]/.test(val);
+      const isSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(val);
 
-    roleSelect.addEventListener('change', updateRoleFields);
-    updateRoleFields();
+      updateRule(ruleLength, isLength);
+      updateRule(ruleLetter, isLetter);
+      updateRule(ruleNumber, isNumber);
+      updateRule(ruleSpecial, isSpecial);
+
+      if (isLength && isLetter && isNumber && isSpecial) {
+        passwordInput.classList.remove('is-invalid');
+        passwordInput.classList.add('is-valid');
+      } else {
+        passwordInput.classList.remove('is-valid');
+        if (val.length > 0) passwordInput.classList.add('is-invalid');
+      }
+    });
+  }
+
+  function updateRule(elem, isValid) {
+    if (!elem) return;
+    if (isValid) {
+      elem.classList.remove('text-muted', 'text-danger');
+      elem.classList.add('text-success');
+      const icon = elem.querySelector('i');
+      if (icon) icon.className = 'bi bi-check-circle-fill me-1';
+    } else {
+      elem.classList.remove('text-success');
+      elem.classList.add('text-muted');
+      const icon = elem.querySelector('i');
+      if (icon) icon.className = 'bi bi-circle me-1';
+    }
+  }
+
+  // Live Phone Validation (Exactly 10 numbers)
+  const phoneInput = document.getElementById('reg-phone');
+  if (phoneInput) {
+    // Only allow numbers to be typed
+    phoneInput.addEventListener('input', (e) => {
+      phoneInput.value = phoneInput.value.replace(/\D/g, '').slice(0, 10);
+      if (phoneInput.value.length === 10) {
+        phoneInput.classList.remove('is-invalid');
+        phoneInput.classList.add('is-valid');
+      } else {
+        phoneInput.classList.remove('is-valid');
+        if (phoneInput.value.length > 0) phoneInput.classList.add('is-invalid');
+      }
+    });
+  }
+
+  // Live Age Validation (Positive integer only, > 0)
+  if (ageInput) {
+    ageInput.addEventListener('input', () => {
+      const val = Number(ageInput.value);
+      if (!isNaN(val) && val > 0 && val <= 120) {
+        ageInput.classList.remove('is-invalid');
+        ageInput.classList.add('is-valid');
+      } else {
+        ageInput.classList.remove('is-valid');
+        if (ageInput.value !== '') ageInput.classList.add('is-invalid');
+      }
+    });
   }
 
   // Handle Login Form
@@ -232,114 +113,153 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      if (!validateLoginForm()) {
-        showToast('Please fix the highlighted fields.', 'warning');
-        return;
-      }
-
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
       const submitBtn = loginForm.querySelector('button[type="submit"]');
-      const restoreButton = setButtonLoading(submitBtn, 'Logging in...');
-      let shouldRestore = true;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
 
       try {
-        const res = await apiFetch('/auth/login', {
+        const res = await fetch('/api/auth/login', {
           method: 'POST',
-          skipAuthRedirect: true,
-          body: JSON.stringify({
-            email: document.getElementById('login-email').value.trim(),
-            password: document.getElementById('login-password').value
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
         });
 
-        const data = await readJson(res);
+        const data = await res.json();
         if (data.success) {
-          shouldRestore = false;
           setToken(data.token);
           setCurrentUser(data.user);
-          showToast(`Welcome back, ${data.user.name}!`, 'success');
-          setTimeout(() => redirectForRole(data.user.role), 800);
+          showToast(`Welcome, ${data.user.name}!`, 'success');
+          setTimeout(() => {
+            if (data.user.role === 'doctor') {
+              window.location.href = '/doctor';
+            } else {
+              window.location.href = '/patient';
+            }
+          }, 600);
         } else {
           showToast(data.message || 'Login failed. Please check your credentials.', 'danger');
-          applyServerErrors(data, LOGIN_FIELD_MAP);
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i>Sign In';
         }
-      } catch (error) {
-        showToast(error.message || 'Error connecting to server. Is the backend running?', 'danger');
-      } finally {
-        if (shouldRestore) restoreButton();
+      } catch (err) {
+        showToast('Error connecting to server.', 'danger');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i>Sign In';
       }
     });
   }
 
-  // Handle Register Form
+  // Handle Register Form with Strict Validation
+  const registerForm = document.getElementById('register-form');
   if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const role = document.getElementById('reg-role').value;
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const phone = document.getElementById('reg-phone').value.trim();
+      const ageVal = document.getElementById('reg-age') ? document.getElementById('reg-age').value : '';
 
-      if (!validateRegisterForm()) {
-        showToast('Please fix the highlighted fields.', 'warning');
+      // 1. Strict Phone Check
+      if (!/^\d{10}$/.test(phone)) {
+        showToast('Phone number must be exactly 10 digits (digits only).', 'warning');
+        if (phoneInput) {
+          phoneInput.focus();
+          phoneInput.classList.add('is-invalid');
+        }
+        return;
+      }
+
+      // 2. Strict Age Check (for patient)
+      if (role === 'patient') {
+        const ageNum = Number(ageVal);
+        if (isNaN(ageNum) || ageNum <= 0) {
+          showToast('Age cannot be zero or negative. Please enter a valid age (e.g. 1 to 120).', 'warning');
+          if (ageInput) {
+            ageInput.focus();
+            ageInput.classList.add('is-invalid');
+          }
+          return;
+        }
+        if (ageNum > 120) {
+          showToast('Age cannot exceed 120.', 'warning');
+          if (ageInput) ageInput.focus();
+          return;
+        }
+      }
+
+      // 3. Strict Password Check
+      if (password.length < 8) {
+        showToast('Password must be at least 8 characters long.', 'warning');
+        if (passwordInput) passwordInput.focus();
+        return;
+      }
+      const hasLetter = /[a-zA-Z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password);
+      if (!hasLetter || !hasNumber || !hasSpecial) {
+        showToast('Password must contain letters, numbers, and at least one special character.', 'warning');
+        if (passwordInput) passwordInput.focus();
         return;
       }
 
       const submitBtn = registerForm.querySelector('button[type="submit"]');
-      const restoreButton = setButtonLoading(submitBtn, 'Creating account...');
-      let shouldRestore = true;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating Account...';
+
+      const payload = {
+        name,
+        email,
+        password,
+        phone,
+        role
+      };
+
+      if (role === 'patient') {
+        payload.age = Number(ageVal);
+        payload.gender = document.getElementById('reg-gender').value;
+        payload.bloodGroup = document.getElementById('reg-blood-group').value;
+        payload.allergies = document.getElementById('reg-allergies').value.trim();
+      } else {
+        payload.specialization = document.getElementById('reg-specialization').value.trim();
+        payload.hospital = document.getElementById('reg-hospital').value.trim();
+        payload.licenseNumber = document.getElementById('reg-license').value.trim();
+        payload.experienceYears = document.getElementById('reg-experience').value || undefined;
+      }
 
       try {
-        const res = await apiFetch('/auth/register', {
+        const res = await fetch('/api/auth/register', {
           method: 'POST',
-          skipAuthRedirect: true,
-          body: JSON.stringify(buildRegisterPayload())
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
 
-        const data = await readJson(res);
+        const data = await res.json();
         if (data.success) {
-          shouldRestore = false;
           setToken(data.token);
           setCurrentUser(data.user);
-          showToast('Account created successfully!', 'success');
-          setTimeout(() => redirectForRole(data.user.role), 800);
+          showToast('Account registered successfully!', 'success');
+          setTimeout(() => {
+            if (data.user.role === 'doctor') {
+              window.location.href = '/doctor';
+            } else {
+              window.location.href = '/patient';
+            }
+          }, 600);
         } else {
           showToast(data.message || 'Registration failed.', 'danger');
-          applyServerErrors(data, REGISTER_FIELD_MAP);
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-person-check me-1"></i>Create Account';
         }
-      } catch (error) {
-        showToast(error.message || 'Error communicating with server.', 'danger');
-      } finally {
-        if (shouldRestore) restoreButton();
+      } catch (err) {
+        showToast('Server communication error.', 'danger');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-person-check me-1"></i>Create Account';
       }
     });
   }
-
-  // Quick Demo Login buttons
-  document.querySelectorAll('.btn-demo-login').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const role = btn.getAttribute('data-role');
-      const restoreButton = setButtonLoading(btn, 'Starting session...');
-      let shouldRestore = true;
-
-      try {
-        const res = await apiFetch('/auth/quick-demo-login', {
-          method: 'POST',
-          skipAuthRedirect: true,
-          body: JSON.stringify({ role })
-        });
-        const data = await readJson(res);
-
-        if (data.success) {
-          shouldRestore = false;
-          setToken(data.token);
-          setCurrentUser(data.user);
-          showToast(`Signed in as Demo ${String(role).toUpperCase()}: ${data.user.name}`, 'success');
-          setTimeout(() => redirectForRole(role), 600);
-        } else {
-          showToast(data.message || 'Demo login failed.', 'danger');
-        }
-      } catch (error) {
-        showToast(error.message || 'Server connection failed.', 'danger');
-      } finally {
-        if (shouldRestore) restoreButton();
-      }
-    });
-  });
 });

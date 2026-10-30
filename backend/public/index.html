@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CareSync | Modern Patient-Doctor Health Vault & Care Compliance</title>
+  <title>CareSync | Unified Health Records & Patient Care Compliance</title>
   <link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,7 +16,7 @@
 
   <!-- Top Announcement Bar -->
   <div class="bg-gradient-teal text-white py-2 px-3 text-center small fw-semibold">
-    <i class="bi bi-shield-check me-1"></i>CareSync 2.0 is live • Smart medical reports vault & interactive patient care compliance
+    <i class="bi bi-shield-check me-1"></i>CareSync Platform • Secure medical report vault & doctor-prescribed compliance tracking
   </div>
 
   <!-- Navbar -->
@@ -42,7 +42,7 @@
     <div class="container py-lg-4">
       <div class="row align-items-center g-5">
         
-        <!-- Left: Pitch & Quick Actions -->
+        <!-- Left Column: Value Proposition & Call to Action -->
         <div class="col-lg-6">
           <div class="hero-badge mb-3">
             <i class="bi bi-heart-pulse-fill text-danger"></i>
@@ -59,25 +59,26 @@
             Patients upload their past and present medical records in one secure vault. Doctors review the complete timeline, prescribe medicines, and set daily precautions. Patients check them off in real time — closing the healthcare compliance loop.
           </p>
 
-          <!-- 1-Click Instant Demo Card -->
-          <div class="card p-3 custom-card border-teal mb-4 bg-white shadow-sm" style="border-left: 4px solid var(--teal-accent);">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="small fw-bold text-dark text-uppercase">
-                <i class="bi bi-lightning-charge-fill text-warning me-1"></i>Try 1-Click Instant Demo
-              </span>
-              <span class="badge bg-success-subtle text-success small">No Password Needed</span>
+          <!-- Core Value Cards -->
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <div class="d-flex align-items-center gap-2 p-2 rounded bg-white border">
+                <i class="bi bi-cloud-arrow-up-fill fs-4 text-teal"></i>
+                <div>
+                  <span class="fw-bold d-block small">Central Medical Vault</span>
+                  <small class="text-muted">Blood tests, X-rays & MRIs</small>
+                </div>
+              </div>
             </div>
-            <div class="d-flex flex-wrap gap-2">
-              <button class="btn btn-primary btn-sm px-3 py-2 btn-demo-login shadow-sm" data-role="patient">
-                <i class="bi bi-person-circle me-1"></i>Launch as Demo Patient
-              </button>
-              <button class="btn btn-teal btn-sm px-3 py-2 btn-demo-login shadow-sm" data-role="doctor">
-                <i class="bi bi-hospital me-1"></i>Launch as Demo Doctor
-              </button>
+            <div class="col-sm-6">
+              <div class="d-flex align-items-center gap-2 p-2 rounded bg-white border">
+                <i class="bi bi-check2-circle fs-4 text-success"></i>
+                <div>
+                  <span class="fw-bold d-block small">Active Care Compliance</span>
+                  <small class="text-muted">Interactive daily checklist</small>
+                </div>
+              </div>
             </div>
-            <small class="text-muted mt-2 d-block" style="font-size: 0.78rem;">
-              Instant access pre-loaded with simulated blood tests, active care plans, and daily tasks.
-            </small>
           </div>
 
           <!-- CTA Buttons -->
@@ -85,9 +86,9 @@
             <button class="btn btn-teal btn-lg px-4 py-2" data-bs-toggle="modal" data-bs-target="#registerModal">
               <i class="bi bi-person-plus me-1"></i>Create Free Account
             </button>
-            <a href="#interactive-simulator" class="btn btn-outline-secondary btn-lg px-4 py-2">
-              <i class="bi bi-play-circle me-1"></i>Try Live Simulator
-            </a>
+            <button class="btn btn-outline-secondary btn-lg px-4 py-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+            </button>
           </div>
 
           <!-- Trust Badges -->
@@ -98,7 +99,7 @@
           </div>
         </div>
 
-        <!-- Right: Modern Visual Graphic -->
+        <!-- Right Column: Visual Artwork -->
         <div class="col-lg-6">
           <div class="image-overlap-wrapper">
             <!-- Floating Pill 1 -->
@@ -139,7 +140,7 @@
             <div class="simulator-header d-flex justify-content-between align-items-center">
               <div>
                 <h5 class="mb-0 fw-bold"><i class="bi bi-check2-circle me-2"></i>Patient's Daily Care Checklist</h5>
-                <small class="opacity-75">Click the checkboxes below to mark tasks as done and watch your adherence climb!</small>
+                <small class="opacity-75">Click the tasks below to mark them done and watch your adherence score climb!</small>
               </div>
               <div class="text-end">
                 <span class="badge bg-white text-teal fw-bold fs-6" id="sim-score-badge">66%</span>
@@ -161,9 +162,9 @@
               <!-- Interactive Simulated Items -->
               <div class="d-flex flex-column gap-2" id="sim-tasks-container">
                 
-                <div class="task-item done" role="button" tabindex="0" aria-label="Toggle medication task" onclick="toggleSimTask(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSimTask(this);}">
+                <div class="task-item done" onclick="toggleSimTask(this)">
                   <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-success task-checkbox-btn" type="button" tabindex="-1">
+                    <button class="btn btn-success task-checkbox-btn">
                       <i class="bi bi-check-lg fw-bold"></i>
                     </button>
                     <div>
@@ -175,9 +176,9 @@
                   <span class="badge bg-success">Done</span>
                 </div>
 
-                <div class="task-item done" role="button" tabindex="0" aria-label="Toggle blood pressure task" onclick="toggleSimTask(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSimTask(this);}">
+                <div class="task-item done" onclick="toggleSimTask(this)">
                   <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-success task-checkbox-btn" type="button" tabindex="-1">
+                    <button class="btn btn-success task-checkbox-btn">
                       <i class="bi bi-check-lg fw-bold"></i>
                     </button>
                     <div>
@@ -189,9 +190,9 @@
                   <span class="badge bg-success">Done</span>
                 </div>
 
-                <div class="task-item" role="button" tabindex="0" aria-label="Toggle diet task" onclick="toggleSimTask(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSimTask(this);}">
+                <div class="task-item" onclick="toggleSimTask(this)">
                   <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-outline-secondary task-checkbox-btn" type="button" tabindex="-1">
+                    <button class="btn btn-outline-secondary task-checkbox-btn">
                       <i class="bi bi-circle"></i>
                     </button>
                     <div>
@@ -206,7 +207,7 @@
               </div>
 
               <div class="text-center mt-3 text-muted small">
-                <i class="bi bi-info-circle me-1"></i>This interactive loop feeds directly to your Doctor's dashboard to track clinical recovery.
+                <i class="bi bi-info-circle me-1"></i>Tasks are synced in real time between patient and physician.
               </div>
             </div>
           </div>
@@ -285,56 +286,52 @@
   </section>
 
   <!-- Login Modal -->
-  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <div class="modal-header border-0 pb-0">
           <div class="d-flex align-items-center gap-2">
             <img src="/img/favicon.svg" alt="CareSync" width="32" height="32">
-            <h5 class="modal-title fw-bold" id="loginModalLabel">Sign In to CareSync</h5>
+            <h5 class="modal-title fw-bold">Sign In to CareSync</h5>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
-          <!-- 1-Click Demo in modal -->
-          <div class="d-flex gap-2 mb-3">
-            <button class="btn btn-outline-primary btn-sm w-50 btn-demo-login py-2" data-role="patient">
-              <i class="bi bi-person me-1"></i>Demo Patient
-            </button>
-            <button class="btn btn-outline-teal btn-sm w-50 btn-demo-login py-2" data-role="doctor" style="border-color: #0f766e; color: #0f766e;">
-              <i class="bi bi-hospital me-1"></i>Demo Doctor
-            </button>
-          </div>
-          <div class="text-center text-muted small my-2">─── or with your email ───</div>
-
-          <form id="login-form" novalidate>
+          <form id="login-form">
             <div class="mb-3">
-              <label class="form-label small fw-semibold" for="login-email">Email Address</label>
-              <input type="email" id="login-email" class="form-control" placeholder="name@example.com" autocomplete="email" maxlength="254" required aria-describedby="login-email-error">
-              <div class="invalid-feedback" id="login-email-error"></div>
+              <label class="form-label">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                <input type="email" id="login-email" class="form-control border-start-0" placeholder="name@example.com" required>
+              </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label small fw-semibold" for="login-password">Password</label>
-              <input type="password" id="login-password" class="form-control" placeholder="••••••••" autocomplete="current-password" required aria-describedby="login-password-error">
-              <div class="invalid-feedback" id="login-password-error"></div>
+            <div class="mb-4">
+              <label class="form-label">Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                <input type="password" id="login-password" class="form-control border-start-0" placeholder="••••••••" required>
+              </div>
             </div>
             <button type="submit" class="btn btn-teal w-100 py-2 fw-semibold">
-              <i class="bi bi-box-arrow-in-right me-1"></i>Log In
+              <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
             </button>
+            <div class="text-center mt-3 small text-muted">
+              Don't have an account? <a href="#" data-bs-target="#registerModal" data-bs-toggle="modal" class="text-teal fw-semibold">Register now</a>
+            </div>
           </form>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Register Modal -->
-  <div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerModalLabel" aria-hidden="true">
+  <!-- Register Modal with Strict Form Validation -->
+  <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow">
         <div class="modal-header border-0 pb-0">
           <div class="d-flex align-items-center gap-2">
             <img src="/img/favicon.svg" alt="CareSync" width="32" height="32">
-            <h5 class="modal-title fw-bold" id="registerModalLabel">Create Your CareSync Account</h5>
+            <h5 class="modal-title fw-bold">Create Your CareSync Account</h5>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -342,59 +339,74 @@
           <form id="register-form" novalidate>
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="reg-role">Account Role</label>
+                <label class="form-label">Account Role <span class="text-danger">*</span></label>
                 <select id="reg-role" class="form-select" required>
                   <option value="patient" selected>I am a Patient</option>
                   <option value="doctor">I am a Doctor / Physician</option>
                 </select>
               </div>
               <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="reg-name">Full Name</label>
-                <input type="text" id="reg-name" class="form-control" placeholder="John Doe or Dr. Sarah Mitchell" autocomplete="name" maxlength="80" required aria-describedby="reg-name-error">
-                <div class="invalid-feedback" id="reg-name-error"></div>
+                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                <input type="text" id="reg-name" class="form-control" placeholder="e.g. John Doe or Dr. Sarah Mitchell" required minlength="2">
               </div>
               <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="reg-email">Email Address</label>
-                <input type="email" id="reg-email" class="form-control" placeholder="name@example.com" autocomplete="email" maxlength="254" required aria-describedby="reg-email-error">
-                <div class="invalid-feedback" id="reg-email-error"></div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="reg-phone">Contact Phone</label>
-                <input type="tel" id="reg-phone" class="form-control" placeholder="+1 (555) 000-0000" autocomplete="tel" maxlength="20" aria-describedby="reg-phone-error">
-                <div class="invalid-feedback" id="reg-phone-error"></div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="reg-password">Password</label>
-                <input type="password" id="reg-password" class="form-control" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" maxlength="72" required aria-describedby="reg-password-error reg-password-help">
-                <div class="form-text" id="reg-password-help">Use at least 8 characters with one letter and one number.</div>
-                <div class="invalid-feedback" id="reg-password-error"></div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold" for="reg-confirm-password">Confirm Password</label>
-                <input type="password" id="reg-confirm-password" class="form-control" placeholder="Re-enter your password" autocomplete="new-password" minlength="8" maxlength="72" required aria-describedby="reg-confirm-password-error">
-                <div class="invalid-feedback" id="reg-confirm-password-error"></div>
+                <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                <input type="email" id="reg-email" class="form-control" placeholder="name@example.com" required>
               </div>
 
-              <!-- Patient Specific Fields -->
+              <!-- Strict Phone Field: Exactly 10 digits -->
+              <div class="col-md-6">
+                <label class="form-label">Phone Number (10 Digits) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-muted small">+91</span>
+                  <input type="tel" id="reg-phone" class="form-control" placeholder="9876543210" maxlength="10" required pattern="[0-9]{10}">
+                </div>
+                <div class="form-text small text-muted">Must be exactly 10 numeric digits.</div>
+              </div>
+
+              <!-- Strict Password Field with Live Rules Checklist -->
+              <div class="col-12">
+                <label class="form-label">Password <span class="text-danger">*</span></label>
+                <input type="password" id="reg-password" class="form-control" placeholder="Create a secure password" minlength="8" required>
+                <!-- Live Checklist Indicator -->
+                <div class="password-rules mt-2">
+                  <div class="fw-bold mb-1 small text-dark"><i class="bi bi-shield-check me-1 text-teal"></i>Password Requirements:</div>
+                  <ul class="list-unstyled mb-0 row g-1">
+                    <li class="col-sm-6 text-muted" id="rule-length">
+                      <i class="bi bi-circle me-1"></i>At least 8 characters
+                    </li>
+                    <li class="col-sm-6 text-muted" id="rule-letter">
+                      <i class="bi bi-circle me-1"></i>At least one letter (a-z, A-Z)
+                    </li>
+                    <li class="col-sm-6 text-muted" id="rule-number">
+                      <i class="bi bi-circle me-1"></i>At least one number (0-9)
+                    </li>
+                    <li class="col-sm-6 text-muted" id="rule-special">
+                      <i class="bi bi-circle me-1"></i>At least one special character (!@#$% etc.)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Patient Specific Fields (Strict Age > 0) -->
               <div id="patient-specific-fields" class="row g-3 mt-1">
                 <div class="col-md-4">
-                  <label class="form-label small fw-semibold" for="reg-age">Age</label>
-                  <input type="number" id="reg-age" class="form-control" placeholder="e.g. 35" min="0" max="120" step="1" inputmode="numeric" aria-describedby="reg-age-error">
-                  <div class="invalid-feedback" id="reg-age-error"></div>
+                  <label class="form-label">Age (Years) <span class="text-danger">*</span></label>
+                  <input type="number" id="reg-age" class="form-control" placeholder="e.g. 35" min="1" max="120" required>
+                  <div class="form-text small text-muted">Must be greater than 0.</div>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label small fw-semibold" for="reg-gender">Gender</label>
-                  <select id="reg-gender" class="form-select" aria-describedby="reg-gender-error">
+                  <label class="form-label">Gender</label>
+                  <select id="reg-gender" class="form-select">
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
                   </select>
-                  <div class="invalid-feedback" id="reg-gender-error"></div>
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label small fw-semibold" for="reg-blood-group">Blood Group</label>
-                  <select id="reg-blood-group" class="form-select" aria-describedby="reg-blood-group-error">
+                  <label class="form-label">Blood Group</label>
+                  <select id="reg-blood-group" class="form-select">
                     <option value="">Select</option>
                     <option value="A+">A+</option>
                     <option value="A-">A-</option>
@@ -405,43 +417,40 @@
                     <option value="O+">O+</option>
                     <option value="O-">O-</option>
                   </select>
-                  <div class="invalid-feedback" id="reg-blood-group-error"></div>
                 </div>
                 <div class="col-12">
-                  <label class="form-label small fw-semibold" for="reg-allergies">Known Allergies</label>
-                  <input type="text" id="reg-allergies" class="form-control" placeholder="e.g. Penicillin, Peanuts, Sulfa (or None)" maxlength="300" aria-describedby="reg-allergies-error">
-                  <div class="invalid-feedback" id="reg-allergies-error"></div>
+                  <label class="form-label">Known Allergies / Medical Notes</label>
+                  <input type="text" id="reg-allergies" class="form-control" placeholder="e.g. Penicillin, Peanuts, Sulfa (or None)">
                 </div>
               </div>
 
               <!-- Doctor Specific Fields -->
               <div id="doctor-specific-fields" class="row g-3 mt-1 d-none">
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold" for="reg-specialization">Medical Specialization</label>
-                  <input type="text" id="reg-specialization" class="form-control" placeholder="e.g. Internal Medicine, Cardiology" maxlength="120" aria-describedby="reg-specialization-error">
-                  <div class="invalid-feedback" id="reg-specialization-error"></div>
+                  <label class="form-label">Medical Specialization <span class="text-danger">*</span></label>
+                  <input type="text" id="reg-specialization" class="form-control" placeholder="e.g. Internal Medicine, Cardiology">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold" for="reg-hospital">Clinic / Hospital Affiliation</label>
-                  <input type="text" id="reg-hospital" class="form-control" placeholder="e.g. City Health Hospital" maxlength="120" aria-describedby="reg-hospital-error">
-                  <div class="invalid-feedback" id="reg-hospital-error"></div>
+                  <label class="form-label">Clinic / Hospital Affiliation <span class="text-danger">*</span></label>
+                  <input type="text" id="reg-hospital" class="form-control" placeholder="e.g. City Health Hospital">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold" for="reg-license">Medical Registration / License #</label>
-                  <input type="text" id="reg-license" class="form-control" placeholder="e.g. REG-19284" maxlength="60" aria-describedby="reg-license-error">
-                  <div class="invalid-feedback" id="reg-license-error"></div>
+                  <label class="form-label">Medical Registration / License #</label>
+                  <input type="text" id="reg-license" class="form-control" placeholder="e.g. REG-19284">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-semibold" for="reg-experience">Years of Practice</label>
-                  <input type="number" id="reg-experience" class="form-control" placeholder="e.g. 10" min="0" max="70" step="1" inputmode="numeric" aria-describedby="reg-experience-error">
-                  <div class="invalid-feedback" id="reg-experience-error"></div>
+                  <label class="form-label">Years of Practice</label>
+                  <input type="number" id="reg-experience" class="form-control" placeholder="e.g. 10" min="0">
                 </div>
               </div>
 
               <div class="col-12 mt-4">
                 <button type="submit" class="btn btn-teal w-100 py-2 fw-semibold">
-                  Complete Registration
+                  <i class="bi bi-person-check me-1"></i>Create Account
                 </button>
+                <div class="text-center mt-3 small text-muted">
+                  Already have an account? <a href="#" data-bs-target="#loginModal" data-bs-toggle="modal" class="text-teal fw-semibold">Sign in</a>
+                </div>
               </div>
             </div>
           </form>
@@ -459,7 +468,7 @@
           <span class="text-muted small">© 2026 CareSync Health Platform. All rights reserved.</span>
         </div>
         <div class="d-flex gap-3 small text-muted">
-          <span><i class="bi bi-shield-check text-success me-1"></i>HIPAA & GDPR Standards</span>
+          <span><i class="bi bi-shield-check text-success me-1"></i>Strict Data Validation & Privacy</span>
           <span>•</span>
           <span>MongoDB Atlas Connected</span>
         </div>
@@ -497,7 +506,6 @@
         badge.textContent = 'Done';
       }
 
-      // Recalculate simulator score
       const total = document.querySelectorAll('#sim-tasks-container .task-item').length;
       const done = document.querySelectorAll('#sim-tasks-container .task-item.done').length;
       const pct = Math.round((done / total) * 100);

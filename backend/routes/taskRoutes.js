@@ -12,7 +12,7 @@ const { protect, authorize } = require('../middleware/auth');
 router.get('/my-tasks', protect, authorize('patient'), getMyTasks);
 
 // Patient toggles task status (Done / To Do Yet)
-router.patch('/:id/toggle', protect, authorize('patient'), toggleTaskStatus);
+router.patch('/:id/toggle', protect, toggleTaskStatus);
 
 // Doctor checks compliance and tasks of a patient
 router.get('/patient/:patientId', protect, authorize('doctor'), getPatientTasksForDoctor);

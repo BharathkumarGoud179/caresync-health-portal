@@ -1,49 +1,31 @@
 const Report = require('../models/Report');
 const User = require('../models/User');
+const { hasDoctorAccess } = require('../utils/accessControl');
+const { sendNotification } = require('../utils/notificationHelper');
+const { analyzeMedicalReport } = require('../utils/aiLabAnalyzer');
 const fs = require('fs');
 const path = require('path');
-const {
-  sendValidationError,
-  validateReport,
-  isObjectId,
-  asString
-} = require('../utils/validation');
-
-const removeUploadedFile = async (file) => {
-  if (!file || !file.path) return;
-  try {
-    await fs.promises.unlink(file.path);
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      console.warn('Could not remove uploaded file:', error.message);
-    }
-  }
-};
 
 // @desc    Upload a new medical report (Patient)
 // @route   POST /api/reports/upload
-exports.uploadReport = async (req, res, next) => {
+exports.uploadReport = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'Please select a file to upload (PDF, JPG, PNG, WEBP).'
+        message: 'Please select a file to upload (PDF, JPG, PNG).'
       });
     }
 
-    const { errors, value } = validateReport(req.body);
-    if (errors.length > 0) {
-      await removeUploadedFile(req.file);
-      return sendValidationError(res, errors);
-    }
+    const { title, category, reportDate, labOrHospital, notes } = req.body;
 
     const report = await Report.create({
       patient: req.user.id,
-      title: value.title || req.file.originalname,
-      category: value.category,
-      reportDate: value.reportDate,
-      labOrHospital: value.labOrHospital,
-      notes: value.notes,
+      title: title || req.file.originalname,
+      category: category || 'Blood Test',
+      reportDate: reportDate ? new Date(reportDate) : new Date(),
+      labOrHospital: labOrHospital || 'General Clinic',
+      notes: notes || '',
       fileName: req.file.filename,
       originalName: req.file.originalname,
       filePath: `/uploads/${req.file.filename}`,
@@ -57,28 +39,27 @@ exports.uploadReport = async (req, res, next) => {
       report
     });
   } catch (error) {
-    // If saving the metadata failed, do not leave an orphaned file on disk.
-    await removeUploadedFile(req.file);
-    next(error);
+    console.error('Upload report error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error occurred while saving the report.'
+    });
   }
 };
 
 // @desc    Get all reports for the logged-in patient
 // @route   GET /api/reports/my-reports
-exports.getMyReports = async (req, res, next) => {
+exports.getMyReports = async (req, res) => {
   try {
-    const category = asString(req.query.category);
-    const search = asString(req.query.search);
-    const query = { patient: req.user.id };
+    const { category, search } = req.query;
+    let query = { patient: req.user.id };
 
     if (category && category !== 'All') {
       query.category = category;
     }
 
     if (search) {
-      // Escape user input so a search term cannot become a regex injection.
-      const safeSearch = search.slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      query.title = { $regex: safeSearch, $options: 'i' };
+      query.title = { $regex: search, $options: 'i' };
     }
 
     const reports = await Report.find(query).sort({ reportDate: -1, createdAt: -1 });
@@ -89,25 +70,30 @@ exports.getMyReports = async (req, res, next) => {
       reports
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Get reports of a specific patient (for Doctor)
 // @route   GET /api/reports/patient/:patientId
-exports.getPatientReportsForDoctor = async (req, res, next) => {
+exports.getPatientReportsForDoctor = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    if (!isObjectId(patientId)) {
-      return res.status(400).json({ success: false, message: 'Invalid patient ID.' });
-    }
-
-    const patient = await User.findOne({ _id: patientId, role: 'patient' });
-    if (!patient) {
+    const patient = await User.findById(patientId);
+    if (!patient || patient.role !== 'patient') {
       return res.status(404).json({
         success: false,
         message: 'Patient record not found.'
+      });
+    }
+
+    // Strict Privacy Access Check
+    const hasAccess = await hasDoctorAccess(patientId, req.user.id);
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        message: "Access Denied: You do not have approved access to this patient's medical records. Patient must send an invitation and it must be accepted."
       });
     }
 
@@ -132,18 +118,14 @@ exports.getPatientReportsForDoctor = async (req, res, next) => {
       reports
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Delete a medical report (Patient only)
 // @route   DELETE /api/reports/:id
-exports.deleteReport = async (req, res, next) => {
+exports.deleteReport = async (req, res) => {
   try {
-    if (!isObjectId(req.params.id)) {
-      return res.status(400).json({ success: false, message: 'Invalid report ID.' });
-    }
-
     const report = await Report.findById(req.params.id);
 
     if (!report) {
@@ -154,20 +136,20 @@ exports.deleteReport = async (req, res, next) => {
     }
 
     // Verify ownership
-    if (report.patient.toString() !== req.user.id) {
+    if (report.patient.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this report.'
       });
     }
 
-    // Delete file from disk if it exists
+    // Delete file from disk if exists
     const fullPath = path.join(__dirname, '..', 'public', report.filePath);
-    try {
-      await fs.promises.unlink(fullPath);
-    } catch (error) {
-      if (error.code !== 'ENOENT') {
-        console.warn('Could not delete file from disk:', error.message);
+    if (fs.existsSync(fullPath)) {
+      try {
+        fs.unlinkSync(fullPath);
+      } catch (err) {
+        console.warn('Could not delete file from disk:', err.message);
       }
     }
 
@@ -178,6 +160,89 @@ exports.deleteReport = async (req, res, next) => {
       message: 'Report deleted successfully.'
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Perform AI-Powered Medical Lab Analysis on a report
+// @route   POST /api/reports/:id/analyze-ai
+exports.analyzeReportAI = async (req, res) => {
+  try {
+    const report = await Report.findById(req.params.id);
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found.' });
+    }
+
+    // Access check: User must be patient owner or authorized doctor
+    if (req.user.role === 'patient') {
+      if (report.patient.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Access denied to this report.' });
+      }
+    } else if (req.user.role === 'doctor') {
+      const hasAccess = await hasDoctorAccess(report.patient, req.user.id);
+      if (!hasAccess) {
+        return res.status(403).json({ success: false, message: 'Access denied: not authorized for this patient.' });
+      }
+    }
+
+    // Run AI lab analysis
+    const analysis = await analyzeMedicalReport(report);
+    report.aiAnalysis = analysis;
+    await report.save();
+
+    // Trigger in-app notification
+    const io = req.app.get('io');
+    await sendNotification({
+      recipient: report.patient,
+      sender: req.user.id,
+      type: 'ai_analysis_ready',
+      title: 'AI Lab Analysis Completed',
+      message: `AI analysis ready for "${report.title}". Overall risk status: ${analysis.overallRiskScore}.`,
+      link: '/patient',
+      metadata: { reportId: report._id, riskScore: analysis.overallRiskScore },
+      io
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'AI medical analysis completed successfully!',
+      aiAnalysis: report.aiAnalysis
+    });
+  } catch (error) {
+    console.error('AI Analysis error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get a single report with its AI analysis details
+// @route   GET /api/reports/:id
+exports.getReportById = async (req, res) => {
+  try {
+    const report = await Report.findById(req.params.id).populate('patient', 'name age gender bloodGroup');
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found.' });
+    }
+
+    // Access check
+    if (req.user.role === 'patient') {
+      if (report.patient._id.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Access denied.' });
+      }
+    } else if (req.user.role === 'doctor') {
+      const hasAccess = await hasDoctorAccess(report.patient._id, req.user.id);
+      if (!hasAccess) {
+        return res.status(403).json({ success: false, message: 'Access denied: not authorized for this patient.' });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      report
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+

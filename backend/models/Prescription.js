@@ -4,14 +4,11 @@ const medicationItemSchema = new mongoose.Schema({
   medicineName: {
     type: String,
     required: true,
-    trim: true,
-    maxlength: [120, 'Medicine name must be 120 characters or fewer']
+    trim: true
   },
   dosage: {
     type: String,
     required: true,
-    trim: true,
-    maxlength: [60, 'Dosage must be 60 characters or fewer'],
     default: '1 Tablet'
   },
   frequency: {
@@ -31,8 +28,6 @@ const medicationItemSchema = new mongoose.Schema({
   },
   durationDays: {
     type: Number,
-    min: 1,
-    max: 365,
     default: 7
   }
 });
@@ -41,13 +36,11 @@ const precautionItemSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    trim: true,
-    maxlength: [160, 'Precaution title must be 160 characters or fewer']
+    trim: true
   },
   description: {
     type: String,
-    trim: true,
-    maxlength: [500, 'Precaution description must be 500 characters or fewer']
+    trim: true
   },
   category: {
     type: String,
@@ -71,14 +64,11 @@ const prescriptionSchema = new mongoose.Schema(
     diagnosis: {
       type: String,
       required: [true, 'Please provide a diagnosis or consultation reason'],
-      trim: true,
-      minlength: [2, 'Diagnosis must be at least 2 characters'],
-      maxlength: [200, 'Diagnosis must be 200 characters or fewer']
+      trim: true
     },
     clinicalNotes: {
       type: String,
-      trim: true,
-      maxlength: [2000, 'Clinical notes must be 2000 characters or fewer']
+      trim: true
     },
     medications: [medicationItemSchema],
     precautions: [precautionItemSchema],
