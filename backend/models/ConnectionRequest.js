@@ -14,7 +14,7 @@ const connectionRequestSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected'],
+      enum: ['pending', 'accepted', 'rejected', 'revoked'],
       default: 'pending'
     },
     message: {
@@ -23,6 +23,30 @@ const connectionRequestSchema = new mongoose.Schema(
     },
     respondedAt: {
       type: Date
+    },
+    // Patient-Controlled Sharing Controls
+    shareScope: {
+      type: String,
+      enum: ['all', 'selected'],
+      default: 'all' // 'all' = full vault, 'selected' = only allowedReportIds
+    },
+    allowedReportIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Report'
+      }
+    ],
+    expiresAt: {
+      type: Date,
+      default: null // null = permanent until revoked; Date = time-limited access
+    },
+    revokedAt: {
+      type: Date,
+      default: null
+    },
+    revokedReason: {
+      type: String,
+      default: ''
     }
   },
   {
@@ -30,7 +54,7 @@ const connectionRequestSchema = new mongoose.Schema(
   }
 );
 
-// Unique index: one active request per patient-doctor pair
+// Compound index
 connectionRequestSchema.index({ patient: 1, doctor: 1 }, { unique: true });
 
 module.exports = mongoose.model('ConnectionRequest', connectionRequestSchema);

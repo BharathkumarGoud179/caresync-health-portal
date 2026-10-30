@@ -45,6 +45,7 @@ app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/doctors', require('./routes/doctorRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/sharing', require('./routes/sharingRoutes'));
 
 // Route views
 app.get('/patient', (req, res) => {

@@ -1,8 +1,11 @@
 const Report = require('../models/Report');
 const User = require('../models/User');
+const ConnectionRequest = require('../models/ConnectionRequest');
 const { hasDoctorAccess } = require('../utils/accessControl');
 const { sendNotification } = require('../utils/notificationHelper');
 const { analyzeMedicalReport } = require('../utils/aiLabAnalyzer');
+const { detectChangesBetweenReports } = require('../utils/aiReportChangeDetector');
+const { logAccessAudit } = require('../utils/auditLogger');
 const fs = require('fs');
 const path = require('path');
 
@@ -88,18 +91,35 @@ exports.getPatientReportsForDoctor = async (req, res) => {
       });
     }
 
-    // Strict Privacy Access Check
+    // Strict Privacy Access Check & Granular Sharing Filtering
     const hasAccess = await hasDoctorAccess(patientId, req.user.id);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
-        message: "Access Denied: You do not have approved access to this patient's medical records. Patient must send an invitation and it must be accepted."
+        message: "Access Denied: You do not have approved, active access to this patient's medical records. Patient may have revoked access or permission has expired."
       });
     }
 
-    const reports = await Report.find({ patient: patientId }).sort({
+    // Check if patient set granular permissions (selective report sharing)
+    const connection = await ConnectionRequest.findOne({ patient: patientId, doctor: req.user.id, status: 'accepted' });
+    let reportsQuery = { patient: patientId };
+
+    if (connection && connection.shareScope === 'selected') {
+      reportsQuery._id = { $in: connection.allowedReportIds || [] };
+    }
+
+    const reports = await Report.find(reportsQuery).sort({
       reportDate: -1,
       createdAt: -1
+    });
+
+    // Record access event in Immutable Audit Trail
+    await logAccessAudit({
+      patient: patientId,
+      doctor: req.user.id,
+      action: 'view_vault',
+      req,
+      metadata: { reportsReturnedCount: reports.length, shareScope: connection ? connection.shareScope : 'all' }
     });
 
     res.status(200).json({
@@ -245,4 +265,107 @@ exports.getReportById = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Download / view a report file with access audit logging
+// @route   GET /api/reports/:id/view-file
+exports.viewOrDownloadReportFile = async (req, res) => {
+  try {
+    const report = await Report.findById(req.params.id);
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found.' });
+    }
+
+    if (req.user.role === 'patient') {
+      if (report.patient.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Access denied.' });
+      }
+    } else if (req.user.role === 'doctor') {
+      const hasAccess = await hasDoctorAccess(report.patient, req.user.id, report._id);
+      if (!hasAccess) {
+        return res.status(403).json({ success: false, message: 'Access denied: doctor does not have permission for this document.' });
+      }
+
+      // Log access audit event (view/download document)
+      const actionType = req.query.download === 'true' ? 'download_report' : 'view_report';
+      await logAccessAudit({
+        patient: report.patient,
+        doctor: req.user.id,
+        action: actionType,
+        report: report._id,
+        reportTitle: report.title,
+        req
+      });
+    }
+
+    const fullPath = path.join(__dirname, '..', 'public', report.filePath);
+    if (!fs.existsSync(fullPath)) {
+      return res.status(404).json({ success: false, message: 'Physical file not found on server.' });
+    }
+
+    if (req.query.download === 'true') {
+      return res.download(fullPath, report.originalName || report.fileName);
+    } else {
+      return res.sendFile(fullPath);
+    }
+  } catch (error) {
+    console.error('View report file error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    AI Longitudinal Change Detector: Compare biomarkers across multiple patient reports
+// @route   GET /api/reports/analytics/changes
+// @route   GET /api/reports/analytics/changes/:patientId
+exports.detectReportChanges = async (req, res) => {
+  try {
+    let patientId = req.user.id;
+
+    if (req.user.role === 'doctor') {
+      patientId = req.params.patientId || req.query.patientId;
+      if (!patientId) {
+        return res.status(400).json({ success: false, message: 'patientId is required for doctor trend analysis.' });
+      }
+
+      const hasAccess = await hasDoctorAccess(patientId, req.user.id);
+      if (!hasAccess) {
+        return res.status(403).json({ success: false, message: 'Access denied: not authorized for this patient.' });
+      }
+    }
+
+    // Retrieve patient reports (respecting sharing scope if doctor)
+    let reportsQuery = { patient: patientId };
+    if (req.user.role === 'doctor') {
+      const conn = await ConnectionRequest.findOne({ patient: patientId, doctor: req.user.id, status: 'accepted' });
+      if (conn && conn.shareScope === 'selected') {
+        reportsQuery._id = { $in: conn.allowedReportIds || [] };
+      }
+    }
+
+    const reports = await Report.find(reportsQuery).sort({ reportDate: 1 });
+
+    if (reports.length < 2) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          status: 'insufficient_data',
+          message: 'At least 2 reports are required to analyze changes and trends over time.',
+          reportsCount: reports.length,
+          trends: []
+        }
+      });
+    }
+
+    // Run AI change detection
+    const changeAnalysis = await detectChangesBetweenReports(reports);
+
+    res.status(200).json({
+      success: true,
+      data: changeAnalysis
+    });
+  } catch (error) {
+    console.error('Detect report changes error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 

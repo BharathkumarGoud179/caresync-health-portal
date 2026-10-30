@@ -249,8 +249,11 @@ async function loadPatientReports(patientId) {
                 <button class="btn btn-sm btn-outline-teal shadow-xs" onclick="openAiAnalysisModal('${r._id}')" title="AI Health Intelligence">
                   <i class="bi bi-robot me-1 text-teal"></i>AI Lab Review ${r.aiAnalysis && r.aiAnalysis.status === 'completed' ? `<span class="badge bg-teal ms-1">${r.aiAnalysis.overallRiskScore}</span>` : ''}
                 </button>
-                <a href="${r.filePath}" target="_blank" class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-box-arrow-up-right me-1"></i>Inspect Document
+                <a href="/api/reports/${r._id}/view-file" target="_blank" class="btn btn-sm btn-outline-primary" title="View Document (Audited)">
+                  <i class="bi bi-box-arrow-up-right me-1"></i>View File
+                </a>
+                <a href="/api/reports/${r._id}/view-file?download=true" class="btn btn-sm btn-outline-secondary" title="Download Document (Audited)">
+                  <i class="bi bi-download"></i>
                 </a>
               </div>
             </div>
@@ -641,3 +644,101 @@ function escapeHtml(text) {
   if (!text) return '';
   return text.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
 }
+
+// Download Consultation Brief PDF for current patient
+window.downloadActivePatientSummaryPdf = function () {
+  if (!selectedPatientId) {
+    showToast('Please select a patient from the roster first.', 'warning');
+    return;
+  }
+  window.open(`/api/sharing/consultation-summary-pdf?patientId=${selectedPatientId}`, '_blank');
+};
+
+// AI Longitudinal Trend Analysis for Doctor View
+window.loadDoctorPatientTrends = async function () {
+  const container = document.getElementById('doctor-patient-trends-container');
+  if (!container) return;
+
+  if (!selectedPatientId) {
+    container.innerHTML = '<div class="text-center py-4 text-muted small">Please select a patient from the left panel first.</div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary me-2"></span>Computing longitudinal biomarker trends...</div>';
+
+  try {
+    const res = await fetch(`/api/reports/analytics/changes/${selectedPatientId}`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    const result = await res.json();
+
+    if (!result.success || !result.data) {
+      throw new Error(result.message || 'Failed to compute trends.');
+    }
+
+    const data = result.data;
+    if (data.status === 'insufficient_data') {
+      container.innerHTML = `
+        <div class="text-center py-4 bg-light rounded text-muted small">
+          <i class="bi bi-graph-up text-secondary fs-3 d-block mb-2"></i>
+          This patient has fewer than 2 diagnostic reports accessible under your current sharing permissions.
+        </div>
+      `;
+      return;
+    }
+
+    const trajColors = {
+      Improving: 'bg-success text-white',
+      Deteriorating: 'bg-danger text-white',
+      'Attention Needed': 'bg-warning text-dark',
+      Stable: 'bg-primary text-white'
+    };
+
+    container.innerHTML = `
+      <div class="card p-3 mb-3 border-0 bg-light">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <span class="badge ${trajColors[data.overallTrajectory] || 'bg-secondary'} px-2 py-1 fs-6">${data.overallTrajectory} Trajectory</span>
+            <small class="text-muted ms-2">${data.reportsComparedCount} reports compared across ${data.timespanDays} days</small>
+          </div>
+          <div class="d-flex gap-2 small">
+            <span class="text-success fw-bold"><i class="bi bi-arrow-up-right me-1"></i>${data.improvingCount} Improving</span>
+            <span class="text-danger fw-bold"><i class="bi bi-arrow-down-right me-1"></i>${data.worseningCount} Worsening</span>
+          </div>
+        </div>
+        <p class="small text-dark mb-0">${escapeHtml(data.summary)}</p>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle small mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Biomarker</th>
+              <th>Baseline (${data.firstReportDate})</th>
+              <th>Latest (${data.latestReportDate})</th>
+              <th>Shift</th>
+              <th>Clinical Assessment</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.trends.map((t) => {
+              const sign = t.absoluteChange > 0 ? '+' : '';
+              const badgeClass = t.trendType === 'improving' ? 'bg-success' : t.trendType === 'worsening' ? 'bg-danger' : 'bg-secondary';
+              return `
+                <tr>
+                  <td><strong>${escapeHtml(t.name)}</strong></td>
+                  <td>${escapeHtml(t.baselineValue)} ${escapeHtml(t.unit)}</td>
+                  <td><strong>${escapeHtml(t.latestValue)}</strong> ${escapeHtml(t.unit)}</td>
+                  <td><span class="badge ${badgeClass}">${sign}${t.percentChange}%</span></td>
+                  <td class="text-muted">${escapeHtml(t.clinicalInterpretation)}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<div class="alert alert-danger py-2 small">Error loading trends: ${escapeHtml(err.message)}</div>`;
+  }
+};

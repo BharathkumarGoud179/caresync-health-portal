@@ -632,3 +632,398 @@ function formatFileSize(bytes) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
+
+// ==========================================
+// 4. AI LONGITUDINAL BIOMARKER TRENDS
+// ==========================================
+window.loadBiomarkerTrends = async function () {
+  const container = document.getElementById('trends-view-container');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="text-center py-5 bg-white rounded border">
+      <div class="spinner-border text-primary mb-2"></div>
+      <p class="text-muted small mb-0">Correlating longitudinal biomarkers across your medical timeline...</p>
+    </div>
+  `;
+
+  try {
+    const res = await fetch('/api/reports/analytics/changes', {
+      headers: { 'Authorization': `Bearer ${getToken()}` }
+    });
+    const result = await res.json();
+
+    if (!result.success || !result.data) {
+      throw new Error(result.message || 'Failed to analyze trends.');
+    }
+
+    const data = result.data;
+
+    if (data.status === 'insufficient_data') {
+      container.innerHTML = `
+        <div class="card p-4 text-center border-0 shadow-sm bg-white">
+          <i class="bi bi-graph-up text-secondary display-5 mb-2"></i>
+          <h6 class="fw-bold text-dark">Need at least 2 diagnostic reports</h6>
+          <p class="text-muted small mb-3">Upload your past and current lab tests (such as Complete Blood Count, Lipid Panels, or Blood Glucose) to see automated trend tracking and health trajectory analysis.</p>
+          <div>
+            <button class="btn btn-teal text-white btn-sm" data-bs-toggle="modal" data-bs-target="#uploadReportModal">
+              <i class="bi bi-cloud-arrow-up me-1"></i>Upload Another Report
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Render Trajectory Card & Metrics
+    const trajBadgeColors = {
+      Improving: 'bg-success text-white',
+      Deteriorating: 'bg-danger text-white',
+      'Attention Needed': 'bg-warning text-dark',
+      Stable: 'bg-primary text-white'
+    };
+
+    const trajBadge = trajBadgeColors[data.overallTrajectory] || 'bg-secondary text-white';
+
+    container.innerHTML = `
+      <!-- Executive Trajectory Card -->
+      <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-body p-4 bg-white">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3 pb-3 border-bottom">
+            <div class="d-flex align-items-center gap-3">
+              <div class="stat-icon bg-primary-subtle text-primary rounded-circle fs-3" style="width: 54px; height: 54px;">
+                <i class="bi bi-heart-pulse-fill"></i>
+              </div>
+              <div>
+                <div class="d-flex align-items-center gap-2">
+                  <h5 class="fw-bold mb-0 text-dark">Overall Health Trajectory:</h5>
+                  <span class="badge ${trajBadge} fs-6 px-3 py-2 rounded-pill">${data.overallTrajectory}</span>
+                </div>
+                <small class="text-muted">Analyzed ${data.reportsComparedCount} diagnostic reports spanning ${data.timespanDays} days (${data.firstReportDate} to ${data.latestReportDate})</small>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <span class="badge bg-success-subtle text-success border border-success-subtle p-2">
+                <i class="bi bi-arrow-up-right me-1"></i>${data.improvingCount} Improving
+              </span>
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle p-2">
+                <i class="bi bi-arrow-down-right me-1"></i>${data.worseningCount} Worsening
+              </span>
+              <span class="badge bg-light text-secondary border p-2">
+                <i class="bi bi-dash me-1"></i>${data.stableCount} Stable
+              </span>
+            </div>
+          </div>
+
+          <p class="text-dark mb-0" style="line-height: 1.6;">${escapeHtml(data.summary)}</p>
+
+          ${data.criticalAlerts && data.criticalAlerts.length > 0 ? `
+            <div class="alert alert-warning py-2 px-3 mt-3 mb-0 small border-warning">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+              <strong>Clinical Alerts:</strong> ${data.criticalAlerts.map(a => escapeHtml(a)).join(' | ')}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- Biomarker Comparison Table -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom p-3">
+          <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-bar-chart-line text-teal me-2"></i>Longitudinal Biomarker Comparison Matrix</h6>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-uppercase">
+              <tr>
+                <th>Biomarker</th>
+                <th>Baseline (${data.firstReportDate})</th>
+                <th>Latest (${data.latestReportDate})</th>
+                <th>Trajectory Change</th>
+                <th>Clinical Interpretation</th>
+              </tr>
+            </thead>
+            <tbody class="small">
+              ${data.trends.map((t) => {
+                const isImprove = t.trendType === 'improving';
+                const isWorse = t.trendType === 'worsening';
+                const badgeClass = isImprove ? 'bg-success text-white' : isWorse ? 'bg-danger text-white' : 'bg-light text-secondary border';
+                const icon = t.direction === 'up' ? 'bi-arrow-up' : t.direction === 'down' ? 'bi-arrow-down' : 'bi-dash';
+                const sign = t.absoluteChange > 0 ? '+' : '';
+
+                return `
+                  <tr>
+                    <td>
+                      <strong class="text-dark d-block">${escapeHtml(t.name)}</strong>
+                      <small class="text-muted">${t.readingsCount} historical tests</small>
+                    </td>
+                    <td>
+                      <span class="badge bg-light text-dark border">${escapeHtml(t.baselineValue)} ${escapeHtml(t.unit)}</span>
+                    </td>
+                    <td>
+                      <span class="badge bg-light text-dark border fw-bold">${escapeHtml(t.latestValue)} ${escapeHtml(t.unit)}</span>
+                    </td>
+                    <td>
+                      <span class="badge ${badgeClass} px-2 py-1">
+                        <i class="bi ${icon} me-1"></i>${sign}${t.percentChange}% (${sign}${t.absoluteChange} ${escapeHtml(t.unit)})
+                      </span>
+                    </td>
+                    <td style="max-width: 320px;">
+                      <span class="text-muted" style="font-size: 0.8rem;">${escapeHtml(t.clinicalInterpretation)}</span>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    container.innerHTML = `<div class="alert alert-danger py-3">Failed to load biomarker trends: ${escapeHtml(err.message)}</div>`;
+  }
+};
+
+// ==========================================
+// 5. PATIENT DATA SHARING & AUDIT LOGS
+// ==========================================
+let patientSharingData = null;
+
+window.loadSharingSettings = async function () {
+  const doctorsContainer = document.getElementById('sharing-doctors-list');
+  const auditContainer = document.getElementById('sharing-audit-logs-list');
+
+  if (doctorsContainer) doctorsContainer.innerHTML = '<div class="text-center py-3 text-muted small"><span class="spinner-border spinner-border-sm me-1"></span>Loading...</div>';
+  if (auditContainer) auditContainer.innerHTML = '<div class="text-center py-3 text-muted small"><span class="spinner-border spinner-border-sm me-1"></span>Loading...</div>';
+
+  try {
+    // 1. Fetch sharing settings
+    const [settingsRes, auditRes] = await Promise.all([
+      fetch('/api/sharing/settings', { headers: { 'Authorization': `Bearer ${getToken()}` } }),
+      fetch('/api/sharing/audit-logs', { headers: { 'Authorization': `Bearer ${getToken()}` } })
+    ]);
+
+    const settingsData = await settingsRes.json();
+    const auditData = await auditRes.json();
+
+    if (settingsData.success) {
+      patientSharingData = settingsData;
+      renderDoctorPermissions(settingsData.connections || []);
+    }
+
+    if (auditData.success) {
+      renderAuditLogs(auditData.logs || []);
+    }
+  } catch (err) {
+    if (doctorsContainer) doctorsContainer.innerHTML = '<div class="alert alert-danger py-2 small">Error loading sharing settings.</div>';
+    if (auditContainer) auditContainer.innerHTML = '<div class="alert alert-danger py-2 small">Error loading audit logs.</div>';
+  }
+};
+
+function renderDoctorPermissions(connections) {
+  const container = document.getElementById('sharing-doctors-list');
+  if (!container) return;
+
+  if (connections.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-4 text-muted small">
+        <i class="bi bi-shield-x d-block fs-3 mb-2 text-secondary opacity-50"></i>
+        No active doctor connections. Send an invitation from the top card to grant clinical access.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = connections.map((conn) => {
+    const doc = conn.doctor || {};
+    const isRevoked = conn.status === 'revoked';
+    const isExpired = conn.expiresAt && new Date(conn.expiresAt) < new Date();
+    const isActive = conn.status === 'accepted' && !isRevoked && !isExpired;
+
+    let statusBadge = '<span class="badge bg-success-subtle text-success border border-success-subtle">Active Full Access</span>';
+    if (isRevoked) {
+      statusBadge = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle">Access Revoked</span>';
+    } else if (isExpired) {
+      statusBadge = '<span class="badge bg-warning-subtle text-warning border border-warning-subtle">Permission Expired</span>';
+    } else if (conn.shareScope === 'selected') {
+      statusBadge = `<span class="badge bg-info-subtle text-info border border-info-subtle">${(conn.allowedReportIds || []).length} Reports Allowed</span>`;
+    }
+
+    return `
+      <div class="p-3 border rounded-3 mb-3 bg-light">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h6 class="fw-bold mb-1 text-dark">${escapeHtml(doc.name || 'Doctor')}</h6>
+            <small class="text-muted d-block">${escapeHtml(doc.specialization || 'Consultant')} • ${escapeHtml(doc.hospital || 'Hospital')}</small>
+            <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+              ${statusBadge}
+              ${conn.expiresAt ? `<small class="text-muted"><i class="bi bi-hourglass-split me-1"></i>Expires: ${formatDate(conn.expiresAt)}</small>` : '<small class="text-muted"><i class="bi bi-infinity me-1"></i>Permanent</small>'}
+            </div>
+          </div>
+          <button class="btn btn-outline-dark btn-sm" onclick="openDoctorSharingModal('${doc._id}', '${escapeHtml(doc.name)}')">
+            <i class="bi bi-gear-fill me-1"></i>Configure
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAuditLogs(logs) {
+  const container = document.getElementById('sharing-audit-logs-list');
+  if (!container) return;
+
+  if (logs.length === 0) {
+    container.innerHTML = '<div class="text-center py-4 text-muted small">No access history recorded yet. Every doctor view or download is logged here.</div>';
+    return;
+  }
+
+  const actionIcons = {
+    view_vault: 'bi-eye-fill text-primary',
+    view_report: 'bi-file-earmark-medical-fill text-teal',
+    download_report: 'bi-download text-success',
+    consultation_summary_view: 'bi-file-pdf-fill text-danger',
+    grant_permission: 'bi-shield-check text-info',
+    revoke_access: 'bi-x-octagon-fill text-danger'
+  };
+
+  const actionLabels = {
+    view_vault: 'Inspected Patient Health Vault',
+    view_report: 'Viewed Document',
+    download_report: 'Downloaded Document File',
+    consultation_summary_view: 'Downloaded Consultation Summary Brief',
+    grant_permission: 'Sharing Permissions Updated',
+    revoke_access: 'Vault Access Revoked'
+  };
+
+  container.innerHTML = logs.map((l) => {
+    const icon = actionIcons[l.action] || 'bi-activity text-secondary';
+    const label = actionLabels[l.action] || l.action;
+    const docName = l.doctor?.name ? `Dr. ${l.doctor.name.replace(/^Dr\.\s*/i, '')}` : 'Doctor';
+
+    return `
+      <div class="p-2 border-bottom small d-flex gap-2 align-items-start">
+        <i class="bi ${icon} fs-5 mt-1"></i>
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong class="text-dark">${label}</strong>
+            <small class="text-muted" style="font-size: 0.725rem;">${formatRelativeTime(l.createdAt)}</small>
+          </div>
+          <p class="mb-0 text-muted" style="font-size: 0.75rem;">
+            By <strong>${escapeHtml(docName)}</strong> ${l.reportTitle ? `• <em>${escapeHtml(l.reportTitle)}</em>` : ''}
+          </p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.openDoctorSharingModal = function (doctorId, doctorName) {
+  const modalElem = document.getElementById('doctorSharingModal');
+  if (!modalElem || !patientSharingData) return;
+
+  document.getElementById('sharing-doctor-id').value = doctorId;
+  document.getElementById('sharing-modal-doc-info').textContent = doctorName;
+
+  const conn = (patientSharingData.connections || []).find(c => c.doctor?._id === doctorId);
+  const reports = patientSharingData.allReports || [];
+
+  const scope = conn ? conn.shareScope : 'all';
+  if (scope === 'selected') {
+    document.getElementById('scopeSelected').checked = true;
+    toggleReportCheckboxes(true);
+  } else {
+    document.getElementById('scopeAll').checked = true;
+    toggleReportCheckboxes(false);
+  }
+
+  // Populate checkboxes
+  const allowedIds = new Set((conn?.allowedReportIds || []).map(r => (r._id || r).toString()));
+  const container = document.getElementById('sharing-reports-checkboxes');
+  container.innerHTML = reports.map((r) => `
+    <div class="form-check mb-1">
+      <input class="form-check-input report-share-checkbox" type="checkbox" value="${r._id}" id="chk-${r._id}" ${allowedIds.has(r._id.toString()) ? 'checked' : ''}>
+      <label class="form-check-label small" for="chk-${r._id}">
+        <strong>${escapeHtml(r.title)}</strong> <span class="badge bg-light text-muted border">${r.category}</span> (${formatDate(r.reportDate)})
+      </label>
+    </div>
+  `).join('');
+
+  const bsModal = bootstrap.Modal.getOrCreateInstance(modalElem);
+  bsModal.show();
+};
+
+window.toggleReportCheckboxes = function (show) {
+  const container = document.getElementById('granular-reports-container');
+  if (show) container.classList.remove('d-none');
+  else container.classList.add('d-none');
+};
+
+window.saveDoctorSharingPermissions = async function () {
+  const doctorId = document.getElementById('sharing-doctor-id').value;
+  const shareScope = document.querySelector('input[name="shareScope"]:checked').value;
+  const durationHours = parseInt(document.getElementById('sharing-duration').value, 10);
+
+  const selectedReportIds = [];
+  if (shareScope === 'selected') {
+    document.querySelectorAll('.report-share-checkbox:checked').forEach((cb) => {
+      selectedReportIds.push(cb.value);
+    });
+    if (selectedReportIds.length === 0) {
+      showToast('Please select at least 1 report, or choose Full Medical Vault.', 'warning');
+      return;
+    }
+  }
+
+  try {
+    const res = await fetch(`/api/sharing/permissions/${doctorId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getToken()}`
+      },
+      body: JSON.stringify({
+        shareScope,
+        allowedReportIds: selectedReportIds,
+        durationHours
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Sharing permissions updated successfully!', 'success');
+      bootstrap.Modal.getInstance(document.getElementById('doctorSharingModal')).hide();
+      loadSharingSettings();
+    } else {
+      showToast(data.message || 'Failed to update permissions.', 'danger');
+    }
+  } catch (err) {
+    showToast('Network error updating permissions.', 'danger');
+  }
+};
+
+window.triggerRevokeFromModal = async function () {
+  const doctorId = document.getElementById('sharing-doctor-id').value;
+  if (!confirm('Are you sure you want to completely revoke this doctor\'s access to your medical vault?')) return;
+
+  try {
+    const res = await fetch(`/api/sharing/revoke/${doctorId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getToken()}`
+      },
+      body: JSON.stringify({ reason: 'Revoked by patient from privacy controls.' })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Doctor access revoked successfully.', 'info');
+      bootstrap.Modal.getInstance(document.getElementById('doctorSharingModal')).hide();
+      loadSharingSettings();
+      checkPatientDoctorStatus();
+    } else {
+      showToast(data.message, 'danger');
+    }
+  } catch (err) {
+    showToast('Failed to revoke access.', 'danger');
+  }
+};
+

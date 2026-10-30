@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareSync | Unified Health Records & Patient Care Compliance</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="bg-gradient-teal text-white py-2 px-3 text-center small fw-semibold">
+    <i class="bi bi-shield-check me-1"></i>CareSync Platform • Secure medical report vault & doctor-prescribed compliance tracking
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm py-2">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <img src="/img/logo.svg" alt="CareSync Logo" height="42">
+      </a>
+      
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-teal px-3 py-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+          <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+        </button>
+        <button class="btn btn-teal px-3 py-2" data-bs-toggle="modal" data-bs-target="#registerModal">
+          <i class="bi bi-person-plus me-1"></i>Get Started
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero-wrapper py-5 border-bottom">
+    <div class="container py-lg-4">
+      <div class="row align-items-center g-5">
+        
+        <!-- Left Column: Value Proposition & Call to Action -->
+        <div class="col-lg-6">
+          <div class="hero-badge mb-3">
+            <i class="bi bi-heart-pulse-fill text-danger"></i>
+            <span>Connected Healthcare Platform</span>
+          </div>
+          
+          <h1 class="display-4 hero-title text-dark mb-3">
+            Every Medical Report.<br>
+            Every Doctor's Advice.<br>
+            <span class="text-gradient-teal">Always in Perfect Sync.</span>
+          </h1>
+          
+          <p class="lead text-muted mb-4 fs-6">
+            Patients upload their past and present medical records in one secure vault. Doctors review the complete timeline, prescribe medicines, and set daily precautions. Patients check them off in real time — closing the healthcare compliance loop.
+          </p>
+
+          <!-- Core Value Cards -->
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <div class="d-flex align-items-center gap-2 p-2 rounded bg-white border">
+                <i class="bi bi-cloud-arrow-up-fill fs-4 text-teal"></i>
+                <div>
+                  <span class="fw-bold d-block small">Central Medical Vault</span>
+                  <small class="text-muted">Blood tests, X-rays & MRIs</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="d-flex align-items-center gap-2 p-2 rounded bg-white border">
+                <i class="bi bi-check2-circle fs-4 text-success"></i>
+                <div>
+                  <span class="fw-bold d-block small">Active Care Compliance</span>
+                  <small class="text-muted">Interactive daily checklist</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTA Buttons -->
+          <div class="d-flex flex-wrap gap-3">
+            <button class="btn btn-teal btn-lg px-4 py-2" data-bs-toggle="modal" data-bs-target="#registerModal">
+              <i class="bi bi-person-plus me-1"></i>Create Free Account
+            </button>
+            <button class="btn btn-outline-secondary btn-lg px-4 py-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+            </button>
+          </div>
+
+          <!-- Trust Badges -->
+          <div class="d-flex gap-4 mt-4 pt-3 border-top text-muted small">
+            <div><i class="bi bi-shield-lock-fill text-success me-1"></i>256-Bit Encrypted Vault</div>
+            <div><i class="bi bi-activity text-teal me-1"></i>Real-Time Compliance</div>
+            <div><i class="bi bi-phone text-primary me-1"></i>Mobile Responsive</div>
+          </div>
+        </div>
+
+        <!-- Right Column: Visual Artwork -->
+        <div class="col-lg-6">
+          <div class="image-overlap-wrapper">
+            <!-- Floating Pill 1 -->
+            <div class="floating-pill" style="top: 15px; left: -15px;">
+              <span class="badge bg-success p-1 rounded-circle"><i class="bi bi-check text-white"></i></span>
+              <span>Amlodipine 5mg • Done at 9:00 AM</span>
+            </div>
+
+            <!-- Floating Pill 2 -->
+            <div class="floating-pill" style="bottom: 25px; right: 10px; animation-delay: 2s;">
+              <i class="bi bi-file-earmark-medical text-teal fs-5"></i>
+              <span>CBC & Lipid Profile Uploaded</span>
+            </div>
+
+            <!-- SVG Illustration Artwork -->
+            <div class="shadow-lg rounded-4 overflow-hidden border">
+              <img src="/img/hero-illustration.svg" alt="CareSync Dashboard Illustration" class="img-fluid w-100">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive Live Simulator Section -->
+  <section class="py-5 bg-white" id="interactive-simulator">
+    <div class="container py-3">
+      <div class="text-center max-w-700 mx-auto mb-4">
+        <span class="hero-badge mb-2"><i class="bi bi-hand-index-thumb"></i>Interactive Feature Preview</span>
+        <h2 class="fw-bold">Experience the Care Compliance Loop</h2>
+        <p class="text-muted">See how a doctor's care plan transforms into an actionable daily checklist for the patient.</p>
+      </div>
+
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="simulator-box">
+            <div class="simulator-header d-flex justify-content-between align-items-center">
+              <div>
+                <h5 class="mb-0 fw-bold"><i class="bi bi-check2-circle me-2"></i>Patient's Daily Care Checklist</h5>
+                <small class="opacity-75">Click the tasks below to mark them done and watch your adherence score climb!</small>
+              </div>
+              <div class="text-end">
+                <span class="badge bg-white text-teal fw-bold fs-6" id="sim-score-badge">66%</span>
+              </div>
+            </div>
+
+            <div class="p-4 bg-light">
+              <!-- Live Progress Bar -->
+              <div class="mb-3">
+                <div class="d-flex justify-content-between small fw-bold text-muted mb-1">
+                  <span>Treatment Adherence</span>
+                  <span id="sim-progress-text">2 of 3 Completed</span>
+                </div>
+                <div class="progress" style="height: 12px; border-radius: 6px;">
+                  <div class="progress-bar bg-success" id="sim-progress-bar" style="width: 66%; transition: width 0.3s ease;"></div>
+                </div>
+              </div>
+
+              <!-- Interactive Simulated Items -->
+              <div class="d-flex flex-column gap-2" id="sim-tasks-container">
+                
+                <div class="task-item done" onclick="toggleSimTask(this)">
+                  <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-success task-checkbox-btn">
+                      <i class="bi bi-check-lg fw-bold"></i>
+                    </button>
+                    <div>
+                      <span class="fw-bold task-title">Take Amlodipine 5mg (1 Tablet)</span>
+                      <span class="badge bg-primary-subtle text-primary border small ms-2"><i class="bi bi-capsule me-1"></i>Medication</span>
+                      <small class="text-muted d-block">After breakfast • Morning dose</small>
+                    </div>
+                  </div>
+                  <span class="badge bg-success">Done</span>
+                </div>
+
+                <div class="task-item done" onclick="toggleSimTask(this)">
+                  <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-success task-checkbox-btn">
+                      <i class="bi bi-check-lg fw-bold"></i>
+                    </button>
+                    <div>
+                      <span class="fw-bold task-title">Daily Morning Blood Pressure Log</span>
+                      <span class="badge bg-danger-subtle text-danger border small ms-2"><i class="bi bi-activity me-1"></i>Vital Check</span>
+                      <small class="text-muted d-block">Resting sitting BP: 124/80 mmHg</small>
+                    </div>
+                  </div>
+                  <span class="badge bg-success">Done</span>
+                </div>
+
+                <div class="task-item" onclick="toggleSimTask(this)">
+                  <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-secondary task-checkbox-btn">
+                      <i class="bi bi-circle"></i>
+                    </button>
+                    <div>
+                      <span class="fw-bold task-title">Strict Low-Sodium Diet (Under 2g Salt)</span>
+                      <span class="badge bg-warning-subtle text-warning border small ms-2"><i class="bi bi-shield-check me-1"></i>Precaution</span>
+                      <small class="text-muted d-block">Avoid processed canned foods and extra salt</small>
+                    </div>
+                  </div>
+                  <span class="badge bg-secondary">To Do Yet</span>
+                </div>
+
+              </div>
+
+              <div class="text-center mt-3 text-muted small">
+                <i class="bi bi-info-circle me-1"></i>Tasks are synced in real time between patient and physician.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Pillars / Features Section -->
+  <section class="py-5 bg-light border-top">
+    <div class="container py-4">
+      <div class="text-center mb-5">
+        <span class="hero-badge mb-2"><i class="bi bi-stars"></i>End-to-End Workflow</span>
+        <h2 class="fw-bold">How CareSync Transforms Healthcare</h2>
+        <p class="text-muted">A unified platform connecting patients, diagnostic reports, and medical advice.</p>
+      </div>
+
+      <div class="row g-4">
+        
+        <!-- Pillar 1 -->
+        <div class="col-md-4">
+          <div class="feature-card">
+            <div class="stat-icon bg-teal-subtle text-teal mb-3" style="background-color: #ccfbf1; color: #0f766e;">
+              <i class="bi bi-file-earmark-medical"></i>
+            </div>
+            <h5 class="fw-bold mb-2">1. Medical Reports Vault</h5>
+            <p class="text-muted small">
+              Never lose paper slips again. Upload past and present blood tests, X-rays, MRI scans, and discharge summaries in PDF or JPG format with date and lab tags.
+            </p>
+            <ul class="list-unstyled small text-secondary mb-0">
+              <li><i class="bi bi-check2 text-success me-1"></i>Chronological timeline ordering</li>
+              <li><i class="bi bi-check2 text-success me-1"></i>Categorized by lab, radiology, or ECG</li>
+              <li><i class="bi bi-check2 text-success me-1"></i>Instant full-screen document inspection</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="col-md-4">
+          <div class="feature-card">
+            <div class="stat-icon bg-primary-subtle text-primary mb-3">
+              <i class="bi bi-prescription2"></i>
+            </div>
+            <h5 class="fw-bold mb-2">2. Clinical Care Plan Builder</h5>
+            <p class="text-muted small">
+              Doctors evaluate uploaded records, formulate diagnoses, and prescribe medications with dosage, frequency, and mandatory lifestyle precautions.
+            </p>
+            <ul class="list-unstyled small text-secondary mb-0">
+              <li><i class="bi bi-check2 text-success me-1"></i>Multi-drug prescription rows</li>
+              <li><i class="bi bi-check2 text-success me-1"></i>Dietary and physical activity rules</li>
+              <li><i class="bi bi-check2 text-success me-1"></i>Follow-up consultation calendar</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="col-md-4">
+          <div class="feature-card">
+            <div class="stat-icon bg-success-subtle text-success mb-3">
+              <i class="bi bi-clipboard2-check"></i>
+            </div>
+            <h5 class="fw-bold mb-2">3. Interactive Task Adherence</h5>
+            <p class="text-muted small">
+              Doctor instructions automatically generate an interactive daily task checklist. Patients mark items as "Done" or "To Do Yet", updating compliance in real time.
+            </p>
+            <ul class="list-unstyled small text-secondary mb-0">
+              <li><i class="bi bi-check2 text-success me-1"></i>Real-time adherence percentage meter</li>
+              <li><i class="bi bi-check2 text-success me-1"></i>Morning, afternoon, and night alerts</li>
+              <li><i class="bi bi-check2 text-success me-1"></i>Doctor monitoring dashboard</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-0 pb-0">
+          <div class="d-flex align-items-center gap-2">
+            <img src="/img/favicon.svg" alt="CareSync" width="32" height="32">
+            <h5 class="modal-title fw-bold">Sign In to CareSync</h5>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="login-form">
+            <div class="mb-3">
+              <label class="form-label">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                <input type="email" id="login-email" class="form-control border-start-0" placeholder="name@example.com" required>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                <input type="password" id="login-password" class="form-control border-start-0" placeholder="••••••••" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-teal w-100 py-2 fw-semibold">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+            </button>
+            <div class="text-center mt-3 small text-muted">
+              Don't have an account? <a href="#" data-bs-target="#registerModal" data-bs-toggle="modal" class="text-teal fw-semibold">Register now</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Modal with Strict Form Validation -->
+  <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-0 pb-0">
+          <div class="d-flex align-items-center gap-2">
+            <img src="/img/favicon.svg" alt="CareSync" width="32" height="32">
+            <h5 class="modal-title fw-bold">Create Your CareSync Account</h5>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="register-form" novalidate>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Account Role <span class="text-danger">*</span></label>
+                <select id="reg-role" class="form-select" required>
+                  <option value="patient" selected>I am a Patient</option>
+                  <option value="doctor">I am a Doctor / Physician</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                <input type="text" id="reg-name" class="form-control" placeholder="e.g. John Doe or Dr. Sarah Mitchell" required minlength="2">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                <input type="email" id="reg-email" class="form-control" placeholder="name@example.com" required>
+              </div>
+
+              <!-- Strict Phone Field: Exactly 10 digits -->
+              <div class="col-md-6">
+                <label class="form-label">Phone Number (10 Digits) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light text-muted small">+91</span>
+                  <input type="tel" id="reg-phone" class="form-control" placeholder="9876543210" maxlength="10" required pattern="[0-9]{10}">
+                </div>
+                <div class="form-text small text-muted">Must be exactly 10 numeric digits.</div>
+              </div>
+
+              <!-- Strict Password Field with Live Rules Checklist -->
+              <div class="col-12">
+                <label class="form-label">Password <span class="text-danger">*</span></label>
+                <input type="password" id="reg-password" class="form-control" placeholder="Create a secure password" minlength="8" required>
+                <!-- Live Checklist Indicator -->
+                <div class="password-rules mt-2">
+                  <div class="fw-bold mb-1 small text-dark"><i class="bi bi-shield-check me-1 text-teal"></i>Password Requirements:</div>
+                  <ul class="list-unstyled mb-0 row g-1">
+                    <li class="col-sm-6 text-muted" id="rule-length">
+                      <i class="bi bi-circle me-1"></i>At least 8 characters
+                    </li>
+                    <li class="col-sm-6 text-muted" id="rule-letter">
+                      <i class="bi bi-circle me-1"></i>At least one letter (a-z, A-Z)
+                    </li>
+                    <li class="col-sm-6 text-muted" id="rule-number">
+                      <i class="bi bi-circle me-1"></i>At least one number (0-9)
+                    </li>
+                    <li class="col-sm-6 text-muted" id="rule-special">
+                      <i class="bi bi-circle me-1"></i>At least one special character (!@#$% etc.)
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Patient Specific Fields (Strict Age > 0) -->
+              <div id="patient-specific-fields" class="row g-3 mt-1">
+                <div class="col-md-4">
+                  <label class="form-label">Age (Years) <span class="text-danger">*</span></label>
+                  <input type="number" id="reg-age" class="form-control" placeholder="e.g. 35" min="1" max="120" required>
+                  <div class="form-text small text-muted">Must be greater than 0.</div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Gender</label>
+                  <select id="reg-gender" class="form-select">
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Blood Group</label>
+                  <select id="reg-blood-group" class="form-select">
+                    <option value="">Select</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Known Allergies / Medical Notes</label>
+                  <input type="text" id="reg-allergies" class="form-control" placeholder="e.g. Penicillin, Peanuts, Sulfa (or None)">
+                </div>
+              </div>
+
+              <!-- Doctor Specific Fields -->
+              <div id="doctor-specific-fields" class="row g-3 mt-1 d-none">
+                <div class="col-md-6">
+                  <label class="form-label">Medical Specialization <span class="text-danger">*</span></label>
+                  <input type="text" id="reg-specialization" class="form-control" placeholder="e.g. Internal Medicine, Cardiology">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Clinic / Hospital Affiliation <span class="text-danger">*</span></label>
+                  <input type="text" id="reg-hospital" class="form-control" placeholder="e.g. City Health Hospital">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Medical Registration / License #</label>
+                  <input type="text" id="reg-license" class="form-control" placeholder="e.g. REG-19284">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Years of Practice</label>
+                  <input type="number" id="reg-experience" class="form-control" placeholder="e.g. 10" min="0">
+                </div>
+              </div>
+
+              <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-teal w-100 py-2 fw-semibold">
+                  <i class="bi bi-person-check me-1"></i>Create Account
+                </button>
+                <div class="text-center mt-3 small text-muted">
+                  Already have an account? <a href="#" data-bs-target="#loginModal" data-bs-toggle="modal" class="text-teal fw-semibold">Sign in</a>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modern Footer -->
+  <footer class="bg-white border-top py-4">
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <img src="/img/logo.svg" alt="CareSync" height="32">
+          <span class="text-muted small">© 2026 CareSync Health Platform. All rights reserved.</span>
+        </div>
+        <div class="d-flex gap-3 small text-muted">
+          <span><i class="bi bi-shield-check text-success me-1"></i>Strict Data Validation & Privacy</span>
+          <span>•</span>
+          <span>MongoDB Atlas Connected</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom JS -->
+  <script src="/js/common.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <!-- Interactive Simulator Script -->
+  <script>
+    function toggleSimTask(card) {
+      const isDone = card.classList.contains('done');
+      const btn = card.querySelector('.task-checkbox-btn');
+      const badge = card.querySelector('.badge:last-child');
+
+      if (isDone) {
+        card.classList.remove('done');
+        btn.className = 'btn btn-outline-secondary task-checkbox-btn';
+        btn.innerHTML = '<i class="bi bi-circle"></i>';
+        badge.className = 'badge bg-secondary';
+        badge.textContent = 'To Do Yet';
+      } else {
+        card.classList.add('done');
+        btn.className = 'btn btn-success task-checkbox-btn';
+        btn.innerHTML = '<i class="bi bi-check-lg fw-bold"></i>';
+        badge.className = 'badge bg-success';
+        badge.textContent = 'Done';
+      }
+
+      const total = document.querySelectorAll('#sim-tasks-container .task-item').length;
+      const done = document.querySelectorAll('#sim-tasks-container .task-item.done').length;
+      const pct = Math.round((done / total) * 100);
+
+      document.getElementById('sim-score-badge').textContent = pct + '%';
+      document.getElementById('sim-progress-text').textContent = done + ' of ' + total + ' Completed';
+      document.getElementById('sim-progress-bar').style.width = pct + '%';
+      document.getElementById('sim-progress-bar').className = 'progress-bar ' + (pct >= 80 ? 'bg-success' : pct >= 40 ? 'bg-warning' : 'bg-danger');
+    }
+  </script>
+</body>
+</html>

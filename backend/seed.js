@@ -8,6 +8,7 @@ const Prescription = require('./models/Prescription');
 const Task = require('./models/Task');
 const ConnectionRequest = require('./models/ConnectionRequest');
 const Notification = require('./models/Notification');
+const AccessAuditLog = require('./models/AccessAuditLog');
 const { analyzeMedicalReport } = require('./utils/aiLabAnalyzer');
 
 dotenv.config();
@@ -37,6 +38,7 @@ const seedDatabase = async () => {
     await Task.deleteMany({});
     await ConnectionRequest.deleteMany({});
     await Notification.deleteMany({});
+    await AccessAuditLog.deleteMany({});
 
     // 1. Create Doctors
     const doctor = await User.create({
@@ -110,11 +112,11 @@ const seedDatabase = async () => {
     // 3. Create Sample Medical Reports for Patient 1
     const report1 = await Report.create({
       patient: patient1._id,
-      title: 'Comprehensive Metabolic Panel (CMP)',
+      title: 'Baseline Complete Blood & Metabolic Panel (CMP)',
       category: 'Blood Test',
       reportDate: new Date('2026-08-15'),
       labOrHospital: 'Quest Diagnostics',
-      notes: 'Fasting test conducted for routine cardiovascular checkup.',
+      notes: 'Fasting Blood Glucose: 118 mg/dL. Total Cholesterol: 232 mg/dL. Triglycerides: 185 mg/dL. HbA1c: 6.4%. Hemoglobin: 14.1 g/dL. Serum Creatinine: 1.05 mg/dL.',
       fileName: 'sample-blood-test.pdf',
       originalName: 'CMP_August_2026.pdf',
       filePath: '/uploads/sample-blood-test.pdf',
@@ -138,11 +140,11 @@ const seedDatabase = async () => {
 
     const report3 = await Report.create({
       patient: patient1._id,
-      title: 'Lipid & Cholesterol Profile',
+      title: 'Follow-Up Lipid & Glycemic Panel',
       category: 'Blood Test',
       reportDate: new Date('2026-10-10'),
       labOrHospital: 'Apollo Diagnostics',
-      notes: 'Total cholesterol slightly elevated at 215 mg/dL. Fasting glucose: 106 mg/dL.',
+      notes: 'Total Cholesterol: 208 mg/dL. Fasting Blood Glucose: 98 mg/dL. Triglycerides: 154 mg/dL. HbA1c: 5.9%. Hemoglobin: 14.3 g/dL. Serum Creatinine: 0.98 mg/dL.',
       fileName: 'sample-blood-test.pdf',
       originalName: 'Lipid_Profile_Oct_2026.pdf',
       filePath: '/uploads/sample-blood-test.pdf',
@@ -155,6 +157,33 @@ const seedDatabase = async () => {
     await report1.save();
     report3.aiAnalysis = await analyzeMedicalReport(report3);
     await report3.save();
+
+    // Seed Initial Access Audit Logs for demonstration
+    await AccessAuditLog.create([
+      {
+        patient: patient1._id,
+        doctor: doctor._id,
+        action: 'view_vault',
+        reportTitle: 'Health Vault Inspection',
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
+      },
+      {
+        patient: patient1._id,
+        doctor: doctor._id,
+        action: 'view_report',
+        report: report1._id,
+        reportTitle: report1.title,
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+      },
+      {
+        patient: patient1._id,
+        doctor: doctor._id,
+        action: 'download_report',
+        report: report3._id,
+        reportTitle: report3.title,
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+      }
+    ]);
 
     // 4. Create Prescription & Precautions from Doctor for Patient 1
     const prescription = await Prescription.create({

@@ -155,13 +155,19 @@
             </button>
           </li>
           <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold text-primary" id="doctor-trends-tab" data-bs-toggle="tab" data-bs-target="#tab-doctor-trends" type="button" role="tab" onclick="loadDoctorPatientTrends()">
+              <i class="bi bi-graph-up-arrow me-1"></i>AI Longitudinal Trends
+              <span class="badge bg-primary text-white ms-1">New</span>
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
             <button class="nav-link fw-semibold" id="careplan-builder-tab" data-bs-toggle="tab" data-bs-target="#tab-doctor-prescribe" type="button" role="tab">
               <i class="bi bi-prescription2 me-1"></i>Prescription & Precaution Builder
             </button>
           </li>
           <li class="nav-item" role="presentation">
             <button class="nav-link fw-semibold" id="compliance-view-tab" data-bs-toggle="tab" data-bs-target="#tab-doctor-compliance" type="button" role="tab">
-              <i class="bi bi-activity me-1"></i>Compliance & Adherence Tracker
+              <i class="bi bi-activity me-1"></i>Compliance Tracker
             </button>
           </li>
         </ul>
@@ -172,11 +178,38 @@
           <!-- 1. PATIENT REPORTS INSPECTION -->
           <div class="tab-pane fade show active" id="tab-doctor-reports" role="tabpanel">
             <div class="card p-3 custom-card mb-3">
-              <h6 class="fw-bold mb-1 text-teal"><i class="bi bi-collection me-2"></i>Patient's Medical Record History</h6>
-              <p class="text-muted small mb-3">Inspect chronological blood tests, scans, and past prescriptions to form an accurate diagnosis.</p>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                  <h6 class="fw-bold mb-0 text-teal"><i class="bi bi-collection me-2"></i>Patient's Medical Record History</h6>
+                  <p class="text-muted small mb-0">Inspect chronological diagnostic tests permitted under the patient's data sharing scope.</p>
+                </div>
+                <button class="btn btn-sm btn-outline-teal" onclick="downloadActivePatientSummaryPdf()" title="Download Brief">
+                  <i class="bi bi-file-earmark-pdf me-1"></i>Consultation Brief (PDF)
+                </button>
+              </div>
               
               <div id="patient-reports-container">
                 <!-- Populated via doctor.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 1B. AI LONGITUDINAL BIOMARKER TRENDS -->
+          <div class="tab-pane fade" id="tab-doctor-trends" role="tabpanel">
+            <div class="card p-3 custom-card mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                  <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-graph-up-arrow me-2"></i>AI Longitudinal Trend Analysis</h6>
+                  <p class="text-muted small mb-0">Tracks biomarker progression and health trajectory across all available patient test reports.</p>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="loadDoctorPatientTrends()">
+                  <i class="bi bi-arrow-repeat me-1"></i>Re-Analyze Trends
+                </button>
+              </div>
+              
+              <div id="doctor-patient-trends-container">
+                <!-- Populated via doctor.js -->
+                <div class="text-center py-4 text-muted small"><span class="spinner-border spinner-border-sm me-1"></span>Select a patient to view longitudinal biomarker trends...</div>
               </div>
             </div>
           </div>
