@@ -214,3 +214,40 @@ exports.logout = (req, res) => {
   });
   res.status(200).json({ success: true, message: 'Logged out successfully' });
 };
+
+// @desc    Quick demo login - no password required, for demo accounts only
+// @route   POST /api/auth/quick-demo-login
+exports.quickDemoLogin = async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    if (!role || (role !== 'patient' && role !== 'doctor')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role. Must be "patient" or "doctor".'
+      });
+    }
+
+    const demoEmails = {
+      doctor: 'doctor.sarah@caresync.com',
+      patient: 'john.patient@caresync.com'
+    };
+
+    const user = await User.findOne({ email: demoEmails[role] });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Demo account not found. Please run "npm run seed" in the backend folder first.'
+      });
+    }
+
+    sendTokenResponse(user, 200, res);
+  } catch (error) {
+    console.error('Quick demo login error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error during demo login'
+    });
+  }
+};
