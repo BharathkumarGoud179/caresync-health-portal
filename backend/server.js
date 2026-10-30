@@ -1,35 +1,36 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/db');
-const { notFound, errorHandler } = require('./middleware/errorHandler');
+const Message = require('./models/Message');
 
 // Load environment variables
 dotenv.config();
-
-if (!process.env.JWT_SECRET) {
-  console.warn('⚠️  JWT_SECRET is not set. Tokens are signed with an insecure development fallback.');
-}
 
 // Connect to Database
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
 
-// Basic security headers (no extra dependency needed for this small app)
-app.disable('x-powered-by');
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  next();
+// Initialize Socket.io with CORS
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
 });
 
+// Make io accessible to all Express controllers
+app.set('io', io);
+
 // Middlewares
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors());
 
@@ -42,9 +43,9 @@ app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/doctors', require('./routes/doctorRoutes'));
-
-// JSON 404 for unknown API routes (including non-GET requests)
-app.use('/api', notFound);
+app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/sharing', require('./routes/sharingRoutes'));
 
 // Route views
 app.get('/patient', (req, res) => {
@@ -56,7 +57,6 @@ app.get('/doctor', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  // If not an API route and not static file, serve index.html
   if (!req.path.startsWith('/api/')) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   } else {
@@ -64,12 +64,95 @@ app.get('*', (req, res) => {
   }
 });
 
+// Socket.io Real-time Chat & WebRTC Signaling
+const onlineUsers = new Map(); // userId -> socketId
+
+io.on('connection', (socket) => {
+  // User registers their online presence
+  socket.on('user-online', (userId) => {
+    if (userId) {
+      socket.userId = userId;
+      onlineUsers.set(userId, socket.id);
+      socket.join(userId);
+    }
+  });
+
+  // 1. Text Chat Message
+  socket.on('send-message', async (data) => {
+    try {
+      const { senderId, recipientId, text } = data;
+      if (!senderId || !recipientId || !text) return;
+
+      const savedMsg = await Message.create({
+        sender: senderId,
+        recipient: recipientId,
+        text: text.trim()
+      });
+
+      // Emit to recipient if online
+      io.to(recipientId).emit('receive-message', savedMsg);
+      // Confirm back to sender
+      socket.emit('message-sent', savedMsg);
+    } catch (err) {
+      console.error('Socket message error:', err);
+    }
+  });
+
+  // 2. WebRTC Voice / Video Calling Signaling
+  // A. Caller initiates call
+  socket.on('call-user', (data) => {
+    const { userToCall, signalData, from, callerName, callType } = data;
+    io.to(userToCall).emit('incoming-call', {
+      signal: signalData,
+      from,
+      callerName,
+      callType: callType || 'video'
+    });
+  });
+
+  // B. Callee answers call
+  socket.on('answer-call', (data) => {
+    const { to, signal } = data;
+    io.to(to).emit('call-accepted', { signal });
+  });
+
+  // C. Exchange ICE Candidates
+  socket.on('ice-candidate', (data) => {
+    const { target, candidate } = data;
+    io.to(target).emit('ice-candidate', { candidate });
+  });
+
+  // D. End or Cancel Call
+  socket.on('end-call', (data) => {
+    const { to } = data;
+    io.to(to).emit('call-ended');
+  });
+
+  // E. Reject Incoming Call
+  socket.on('reject-call', (data) => {
+    const { to } = data;
+    io.to(to).emit('call-rejected');
+  });
+
+  socket.on('disconnect', () => {
+    if (socket.userId) {
+      onlineUsers.delete(socket.userId);
+    }
+  });
+});
+
 // Global Error Handler
-app.use(errorHandler);
+app.use((err, req, res, next) => {
+  console.error('Unhandled Application Error:', err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error'
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`
 ======================================================
   🩺 CareSync - Medical Records & Care Compliance Portal
@@ -78,21 +161,13 @@ const server = app.listen(PORT, () => {
   🌐 Web Application: http://localhost:${PORT}
   👨‍⚕️ Doctor Portal:   http://localhost:${PORT}/doctor
   🧑‍🦱 Patient Portal:  http://localhost:${PORT}/patient
+  💬 Real-Time Chat:  Socket.io active
+  📹 Video/Voice Call: WebRTC Signaling active
 ======================================================
 `);
 });
 
-// Graceful shutdown so nodemon/terminal restarts close the HTTP server cleanly.
-const shutdown = (signal) => {
-  console.log(`\n${signal} received. Closing server...`);
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(1), 10000).unref();
-};
-
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error(`Unhandled Rejection: ${err && err.message ? err.message : err}`);
+process.on('unhandledRejection', (err, promise) => {
+  console.error(`Error: ${err.message}`);
 });

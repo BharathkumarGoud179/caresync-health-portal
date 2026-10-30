@@ -24,13 +24,11 @@ const taskSchema = new mongoose.Schema(
     title: {
       type: String,
       required: [true, 'Task title is required'],
-      trim: true,
-      maxlength: [160, 'Task title must be 160 characters or fewer']
+      trim: true
     },
     description: {
       type: String,
-      trim: true,
-      maxlength: [500, 'Task description must be 500 characters or fewer']
+      trim: true
     },
     timing: {
       type: String,
@@ -55,8 +53,7 @@ const taskSchema = new mongoose.Schema(
     },
     patientFeedback: {
       type: String,
-      trim: true,
-      maxlength: [500, 'Feedback must be 500 characters or fewer']
+      trim: true
     }
   },
   {

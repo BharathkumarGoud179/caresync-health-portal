@@ -2,11 +2,6 @@
 
 A full-stack healthcare web application built with **Node.js, Express, MongoDB, Mongoose, Bootstrap 5, CSS, and JavaScript**.
 
-> **Repository layout:** this folder is the API server. The active React frontend
-> lives in [`../frontend`](../frontend) and runs on `http://localhost:5173`. See the
-> [root README](../README.md) for the combined setup. This file documents the
-> backend, its API, and the original static frontend kept in `public/`.
-
 CareSync bridges the gap between clinic visits and home care:
 1. **Medical Records Vault**: Patients can upload past and present medical reports (blood tests, X-rays, MRI scans, discharge summaries) in PDF/Image formats.
 2. **Clinical Review & Care Plan**: Doctors inspect chronological records, formulate diagnoses, and prescribe medicines along with lifestyle precautions.
@@ -53,7 +48,7 @@ CareSync bridges the gap between clinic visits and home care:
 
 1. **Navigate to the project directory**:
    ```bash
-   cd caresync-health-portal
+   cd "C:\Users\dhyan\.gemini\antigravity\scratch\caresync-health-portal"
    ```
 
 2. **Configure Environment Variables**:
@@ -65,8 +60,6 @@ CareSync bridges the gap between clinic visits and home care:
    JWT_SECRET=caresync_super_secret_jwt_key_2026_secure
    ```
    *(If using MongoDB Atlas, replace `MONGO_URI` with your connection string: `mongodb+srv://<user>:<password>@cluster0.mongodb.net/caresync`)*
-
-   Use a long, random value for `JWT_SECRET` in any real deployment. The value above is only a development placeholder.
 
 3. **Install Dependencies** (already installed in workspace):
    ```bash
@@ -87,12 +80,9 @@ CareSync bridges the gap between clinic visits and home care:
    ```
 
 6. **Open in Browser**:
-   - React app (active frontend): [http://localhost:5173](http://localhost:5173) — start it from `../frontend`.
-   - API: [http://localhost:5000/api](http://localhost:5000/api)
-   - Legacy static app: [http://localhost:5000](http://localhost:5000) (`/patient`, `/doctor`)
-
-   The routes on port `5000` are the original server-rendered frontend kept in
-   `public/`. New work should target the React app on port `5173`.
+   - Web App: [http://localhost:5000](http://localhost:5000)
+   - Patient Portal: [http://localhost:5000/patient](http://localhost:5000/patient)
+   - Doctor Portal: [http://localhost:5000/doctor](http://localhost:5000/doctor)
 
 ---
 
@@ -109,23 +99,10 @@ If you ran `npm run seed`:
 
 ---
 
-## ✅ Validation & Security Notes
-
-- **Server-side validation** lives in `utils/validation.js` and is used by every write endpoint. Invalid input returns `400` with `{ success: false, message, errors: [{ field, message }] }` instead of a Mongoose `500`.
-- **Client-side validation** mirrors the server rules with inline Bootstrap feedback. Forms use `novalidate` so the browser does not submit before the app's own checks run.
-- **Auth**: emails are normalized, login errors do not reveal whether an account exists, passwords require at least one letter and one number, and the auth cookie is `httpOnly` with `sameSite=lax`.
-- **Uploads**: only PDF/JPG/PNG/WEBP files up to 15 MB are accepted. Filenames are generated server-side, orphaned files are cleaned up when metadata validation fails, and report search terms are regex-escaped.
-- **Care plans**: a plan must contain at least one medication or precaution, and follow-up dates cannot be in the past.
-- **Tasks**: only the patient who owns a task can change its status; doctors have a read-only compliance view.
-
----
-
 ## 🏗️ Project Architecture
 
-Paths below are relative to `backend/`.
-
 ```
-backend/
+caresync-health-portal/
 ├── server.js               # Express application entrypoint
 ├── seed.js                 # Database seeder with sample data
 ├── config/
@@ -136,10 +113,7 @@ backend/
 │   ├── Prescription.js     # Prescriptions & precautions
 │   └── Task.js             # Interactive daily tasks & compliance status
 ├── middleware/
-│   ├── auth.js             # JWT verification, RBAC, Multer file upload
-│   └── errorHandler.js     # JSON 404s and centralized error responses
-├── utils/
-│   └── validation.js       # Shared request validators used by controllers
+│   └── auth.js             # JWT verification, RBAC, Multer file upload
 ├── controllers/
 │   ├── authController.js   # Login, registration, 1-click demo login
 │   ├── reportController.js # Medical report upload, list, delete
@@ -173,7 +147,6 @@ backend/
 ### Auth
 - `POST /api/auth/register` - Create patient or doctor account
 - `POST /api/auth/login` - Authenticate & obtain JWT
-- `POST /api/auth/logout` - Clear the auth cookie
 - `GET /api/auth/me` - Get current session profile
 - `POST /api/auth/quick-demo-login` - 1-Click demo sign-in
 

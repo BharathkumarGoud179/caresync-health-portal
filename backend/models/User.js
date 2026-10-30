@@ -5,10 +5,9 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'Please provide a name'],
+      required: [true, 'Please provide your full name'],
       trim: true,
-      minlength: [2, 'Name must be at least 2 characters'],
-      maxlength: [80, 'Name must be 80 characters or fewer']
+      minlength: [2, 'Name must be at least 2 characters']
     },
     email: {
       type: String,
@@ -16,9 +15,8 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      maxlength: [254, 'Email address is too long'],
       match: [
-        /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/,
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
         'Please provide a valid email address'
       ]
     },
@@ -26,7 +24,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please provide a password'],
       minlength: [8, 'Password must be at least 8 characters'],
-      maxlength: [72, 'Password must be 72 characters or fewer'],
       select: false
     },
     role: {
@@ -37,15 +34,15 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
+      required: [true, 'Phone number is required'],
       trim: true,
-      maxlength: [20, 'Phone number is too long'],
-      match: [/^\+?[0-9][0-9\s().-]{6,19}$/, 'Please provide a valid phone number']
+      match: [/^\d{10}$/, 'Phone number must be exactly 10 digits without spaces or country code']
     },
     // Patient Specific Details
     age: {
       type: Number,
-      min: [0, 'Age cannot be negative'],
-      max: [120, 'Age cannot exceed 120']
+      min: [1, 'Age cannot be zero or negative'],
+      max: [120, 'Please enter a valid age (maximum 120)']
     },
     gender: {
       type: String,
@@ -57,8 +54,6 @@ const userSchema = new mongoose.Schema(
     },
     allergies: {
       type: String,
-      trim: true,
-      maxlength: [300, 'Allergies must be 300 characters or fewer'],
       default: 'None reported'
     },
     assignedDoctor: {
@@ -68,24 +63,13 @@ const userSchema = new mongoose.Schema(
     // Doctor Specific Details
     specialization: {
       type: String,
-      trim: true,
-      maxlength: [120, 'Specialization must be 120 characters or fewer'],
       default: 'General Physician'
     },
-    licenseNumber: {
-      type: String,
-      trim: true,
-      maxlength: [60, 'License number must be 60 characters or fewer']
-    },
-    hospital: {
-      type: String,
-      trim: true,
-      maxlength: [120, 'Hospital name must be 120 characters or fewer']
-    },
+    licenseNumber: String,
+    hospital: String,
     experienceYears: {
       type: Number,
-      min: [0, 'Years of practice cannot be negative'],
-      max: [70, 'Years of practice cannot exceed 70']
+      min: [0, 'Years of experience cannot be negative']
     }
   },
   {

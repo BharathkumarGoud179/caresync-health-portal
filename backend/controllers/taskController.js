@@ -1,20 +1,10 @@
 const Task = require('../models/Task');
 const User = require('../models/User');
-const {
-  sendValidationError,
-  validateDirectTask,
-  validateTaskStatus,
-  isObjectId,
-  asString,
-  TASK_STATUSES,
-  TASK_TYPES
-} = require('../utils/validation');
+const { hasDoctorAccess } = require('../utils/accessControl');
 
 // Helper to get start and end of a given date (default today)
 const getDateBounds = (dateStr) => {
-  const target = new Date(dateStr);
-  if (Number.isNaN(target.getTime())) return null;
-
+  const target = dateStr ? new Date(dateStr) : new Date();
   const start = new Date(target);
   start.setHours(0, 0, 0, 0);
 
@@ -24,35 +14,17 @@ const getDateBounds = (dateStr) => {
   return { start, end };
 };
 
-const startOfToday = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
-};
-
 // @desc    Get tasks for logged-in patient with adherence stats
 // @route   GET /api/tasks/my-tasks
-exports.getMyTasks = async (req, res, next) => {
+exports.getMyTasks = async (req, res) => {
   try {
-    const date = asString(req.query.date);
-    const status = asString(req.query.status);
-    const type = asString(req.query.type);
+    const { date, status, type } = req.query;
 
-    if (status && status !== 'all' && !validateTaskStatus(status)) {
-      return res.status(400).json({ success: false, message: 'Invalid task status filter.' });
-    }
-    if (type && type !== 'all' && !TASK_TYPES.includes(type)) {
-      return res.status(400).json({ success: false, message: 'Invalid task type filter.' });
-    }
-
-    const query = { patient: req.user.id };
+    let query = { patient: req.user.id };
 
     if (date) {
-      const bounds = getDateBounds(date);
-      if (!bounds) {
-        return res.status(400).json({ success: false, message: 'Invalid date filter.' });
-      }
-      query.targetDate = { $gte: bounds.start, $lte: bounds.end };
+      const { start, end } = getDateBounds(date);
+      query.targetDate = { $gte: start, $lte: end };
     }
 
     if (status && status !== 'all') {
@@ -63,19 +35,14 @@ exports.getMyTasks = async (req, res, next) => {
       query.taskType = type;
     }
 
-    // Descending status puts "todo" before "skipped" and "done".
     const tasks = await Task.find(query)
       .populate('doctor', 'name specialization hospital')
-      .sort({ status: -1, createdAt: -1 });
+      .sort({ status: 1, createdAt: -1 });
 
-    // Adherence is calculated over all of the patient's tasks, not just the
-    // currently filtered list, so the score stays stable while filtering.
-    const [totalCount, doneCount, todoCount, skippedCount] = await Promise.all([
-      Task.countDocuments({ patient: req.user.id }),
-      Task.countDocuments({ patient: req.user.id, status: 'done' }),
-      Task.countDocuments({ patient: req.user.id, status: 'todo' }),
-      Task.countDocuments({ patient: req.user.id, status: 'skipped' })
-    ]);
+    // Calculate adherence statistics
+    const totalCount = await Task.countDocuments({ patient: req.user.id });
+    const doneCount = await Task.countDocuments({ patient: req.user.id, status: 'done' });
+    const todoCount = await Task.countDocuments({ patient: req.user.id, status: 'todo' });
     const adherenceRate = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
     res.status(200).json({
@@ -85,32 +52,21 @@ exports.getMyTasks = async (req, res, next) => {
         total: totalCount,
         done: doneCount,
         todo: todoCount,
-        skipped: skippedCount,
-        adherenceRate
+        adherenceRate: adherenceRate
       },
       tasks
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Toggle or update task status ('done' or 'todo')
 // @route   PATCH /api/tasks/:id/toggle
-exports.toggleTaskStatus = async (req, res, next) => {
+exports.toggleTaskStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, patientFeedback } = req.body || {};
-
-    if (!isObjectId(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid task ID.' });
-    }
-    if (status !== undefined && !validateTaskStatus(status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Status must be one of: ${TASK_STATUSES.join(', ')}.`
-      });
-    }
+    const { status, patientFeedback } = req.body; // status: 'done' | 'todo' | 'skipped'
 
     const task = await Task.findById(id);
     if (!task) {
@@ -120,56 +76,64 @@ exports.toggleTaskStatus = async (req, res, next) => {
       });
     }
 
-    // Only the patient who owns the task may change it. Doctors have a
-    // read-only compliance view.
-    if (task.patient.toString() !== req.user.id) {
+    // Verify patient owns this task
+    if (task.patient.toString() !== req.user.id && req.user.role !== 'doctor') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to modify this task.'
       });
     }
 
-    task.status = status || (task.status === 'done' ? 'todo' : 'done');
-    task.completedAt = task.status === 'done' ? new Date() : null;
+    // If status is provided, use it; otherwise toggle between 'done' and 'todo'
+    if (status) {
+      task.status = status;
+    } else {
+      task.status = task.status === 'done' ? 'todo' : 'done';
+    }
+
+    if (task.status === 'done') {
+      task.completedAt = new Date();
+    } else {
+      task.completedAt = null;
+    }
 
     if (patientFeedback !== undefined) {
-      task.patientFeedback = asString(patientFeedback).slice(0, 500);
+      task.patientFeedback = patientFeedback;
     }
 
     await task.save();
 
     // Recalculate adherence for patient
-    const [totalCount, doneCount] = await Promise.all([
-      Task.countDocuments({ patient: task.patient }),
-      Task.countDocuments({ patient: task.patient, status: 'done' })
-    ]);
+    const totalCount = await Task.countDocuments({ patient: task.patient });
+    const doneCount = await Task.countDocuments({ patient: task.patient, status: 'done' });
     const adherenceRate = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
-
-    const statusLabel =
-      task.status === 'done' ? 'Done' : task.status === 'skipped' ? 'Skipped' : 'To Do';
 
     res.status(200).json({
       success: true,
-      message: `Task marked as ${statusLabel}.`,
+      message: `Task marked as ${task.status === 'done' ? 'Done' : 'To Do'}!`,
       task,
       adherenceRate
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Get patient tasks for doctor review
 // @route   GET /api/tasks/patient/:patientId
-exports.getPatientTasksForDoctor = async (req, res, next) => {
+exports.getPatientTasksForDoctor = async (req, res) => {
   try {
     const { patientId } = req.params;
 
-    if (!isObjectId(patientId)) {
-      return res.status(400).json({ success: false, message: 'Invalid patient ID.' });
+    const hasAccess = await hasDoctorAccess(patientId, req.user.id);
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access Denied: You do not have approved access to view tasks for this patient.'
+      });
     }
 
-    const patient = await User.findOne({ _id: patientId, role: 'patient' });
+    const patient = await User.findById(patientId);
     if (!patient) {
       return res.status(404).json({
         success: false,
@@ -180,9 +144,8 @@ exports.getPatientTasksForDoctor = async (req, res, next) => {
     const tasks = await Task.find({ patient: patientId }).sort({ createdAt: -1 });
 
     const totalCount = tasks.length;
-    const doneCount = tasks.filter((task) => task.status === 'done').length;
-    const todoCount = tasks.filter((task) => task.status === 'todo').length;
-    const skippedCount = tasks.filter((task) => task.status === 'skipped').length;
+    const doneCount = tasks.filter((t) => t.status === 'done').length;
+    const todoCount = tasks.filter((t) => t.status === 'todo').length;
     const adherenceRate = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
     res.status(200).json({
@@ -192,39 +155,37 @@ exports.getPatientTasksForDoctor = async (req, res, next) => {
         total: totalCount,
         done: doneCount,
         todo: todoCount,
-        skipped: skippedCount,
         adherenceRate
       },
       tasks
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // @desc    Doctor directly adds a specific task/precaution for patient
 // @route   POST /api/tasks/create-task
-exports.createDirectTask = async (req, res, next) => {
+exports.createDirectTask = async (req, res) => {
   try {
-    const { errors, value } = validateDirectTask(req.body);
-    if (errors.length > 0) {
-      return sendValidationError(res, errors);
-    }
+    const { patientId, title, description, taskType, timing } = req.body;
 
-    const patient = await User.findOne({ _id: value.patientId, role: 'patient' });
-    if (!patient) {
-      return res.status(404).json({ success: false, message: 'Selected patient not found.' });
+    if (!patientId || !title) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide patient ID and task title.'
+      });
     }
 
     const task = await Task.create({
-      patient: value.patientId,
+      patient: patientId,
       doctor: req.user.id,
-      taskType: value.taskType,
-      title: value.title,
-      description: value.description,
-      timing: value.timing,
+      taskType: taskType || 'Precaution',
+      title,
+      description: description || '',
+      timing: timing || 'Throughout the day',
       status: 'todo',
-      targetDate: startOfToday()
+      targetDate: new Date()
     });
 
     res.status(201).json({
@@ -233,6 +194,6 @@ exports.createDirectTask = async (req, res, next) => {
       task
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

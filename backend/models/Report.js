@@ -10,9 +10,7 @@ const reportSchema = new mongoose.Schema(
     title: {
       type: String,
       required: [true, 'Please provide a title for the report'],
-      trim: true,
-      minlength: [2, 'Report title must be at least 2 characters'],
-      maxlength: [120, 'Report title must be 120 characters or fewer']
+      trim: true
     },
     category: {
       type: String,
@@ -35,13 +33,11 @@ const reportSchema = new mongoose.Schema(
     labOrHospital: {
       type: String,
       trim: true,
-      maxlength: [120, 'Lab or hospital name must be 120 characters or fewer'],
       default: 'Unknown Clinic/Lab'
     },
     notes: {
       type: String,
-      trim: true,
-      maxlength: [1000, 'Notes must be 1000 characters or fewer']
+      trim: true
     },
     fileName: {
       type: String,
@@ -59,6 +55,38 @@ const reportSchema = new mongoose.Schema(
     },
     fileSize: {
       type: Number
+    },
+    aiAnalysis: {
+      analyzedAt: { type: Date },
+      status: {
+        type: String,
+        enum: ['pending', 'completed', 'failed'],
+        default: 'pending'
+      },
+      summary: { type: String, default: '' },
+      overallRiskScore: {
+        type: String,
+        enum: ['Low', 'Moderate', 'High', 'Critical'],
+        default: 'Low'
+      },
+      confidenceScore: { type: Number, default: 95 },
+      keyBiomarkers: [
+        {
+          name: { type: String, required: true },
+          value: { type: String, required: true },
+          unit: { type: String, default: '' },
+          referenceRange: { type: String, default: '' },
+          status: {
+            type: String,
+            enum: ['Normal', 'High', 'Low', 'Critical', 'Attention'],
+            default: 'Normal'
+          },
+          explanation: { type: String, default: '' }
+        }
+      ],
+      clinicalInsights: [{ type: String }],
+      lifestyleRecommendations: [{ type: String }],
+      questionsForDoctor: [{ type: String }]
     }
   },
   {

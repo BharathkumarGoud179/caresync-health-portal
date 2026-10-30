@@ -4,15 +4,13 @@ const {
   register,
   login,
   getMe,
-  logout,
-  quickDemoLogin
+  logout
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 
 router.post('/register', register);
 router.post('/login', login);
 router.get('/me', protect, getMe);
-router.post('/logout', logout);
-router.post('/quick-demo-login', quickDemoLogin);
+router.get('/logout', logout);
 
 module.exports = router;
