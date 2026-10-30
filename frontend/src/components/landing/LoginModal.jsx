@@ -5,13 +5,7 @@ import { apiFetch, readJson } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { EMAIL_PATTERN } from '../../utils/validation.js';
 
-export default function LoginModal({
-  show,
-  onClose,
-  onAuthenticated,
-  onDemoLogin,
-  demoLoading
-}) {
+export default function LoginModal({ show, onClose, onAuthenticated }) {
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -88,53 +82,6 @@ export default function LoginModal({
       </div>
 
       <div className="modal-body p-4">
-        <div className="d-flex gap-2 mb-3">
-          <button
-            type="button"
-            className="btn btn-outline-primary btn-sm w-50 py-2"
-            onClick={() => onDemoLogin('patient', 'login-demo-patient')}
-            disabled={Boolean(demoLoading['login-demo-patient'])}
-          >
-            {demoLoading['login-demo-patient'] ? (
-              <>
-                <span
-                  className="spinner-border spinner-border-sm me-2"
-                  role="status"
-                  aria-hidden="true"
-                ></span>
-                Starting session...
-              </>
-            ) : (
-              <>
-                <i className="bi bi-person me-1"></i>Demo Patient
-              </>
-            )}
-          </button>
-          <button
-            type="button"
-            className="btn btn-outline-teal btn-sm w-50 py-2"
-            style={{ borderColor: '#0f766e', color: '#0f766e' }}
-            onClick={() => onDemoLogin('doctor', 'login-demo-doctor')}
-            disabled={Boolean(demoLoading['login-demo-doctor'])}
-          >
-            {demoLoading['login-demo-doctor'] ? (
-              <>
-                <span
-                  className="spinner-border spinner-border-sm me-2"
-                  role="status"
-                  aria-hidden="true"
-                ></span>
-                Starting session...
-              </>
-            ) : (
-              <>
-                <i className="bi bi-hospital me-1"></i>Demo Doctor
-              </>
-            )}
-          </button>
-        </div>
-        <div className="text-center text-muted small my-2">─── or with your email ───</div>
-
         <form id="login-form" noValidate onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="form-label small fw-semibold" htmlFor="login-email">

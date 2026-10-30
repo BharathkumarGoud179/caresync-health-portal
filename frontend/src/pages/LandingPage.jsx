@@ -13,7 +13,6 @@ export default function LandingPage() {
   const { showToast } = useToast();
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
-  const [demoLoading, setDemoLoading] = useState({});
 
   useEffect(() => {
     document.title =
@@ -63,33 +62,6 @@ export default function LandingPage() {
     }, delay);
   };
 
-  const handleDemoLogin = async (role, key) => {
-    setDemoLoading((current) => ({ ...current, [key]: true }));
-
-    try {
-      const res = await fetch(`${API_BASE}/auth/quick-demo-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role })
-      });
-      const data = await readJson(res);
-
-      if (data.success) {
-        completeAuth(
-          data,
-          `Signed in as Demo ${String(role).toUpperCase()}: ${data.user.name}`,
-          600,
-          role
-        );
-      } else {
-        showToast(data.message || 'Demo login failed.', 'danger');
-        setDemoLoading((current) => ({ ...current, [key]: false }));
-      }
-    } catch (error) {
-      showToast(error.message || 'Server connection failed.', 'danger');
-      setDemoLoading((current) => ({ ...current, [key]: false }));
-    }
-  };
 
   return (
     <>
@@ -145,66 +117,6 @@ export default function LandingPage() {
                 compliance loop.
               </p>
 
-              <div
-                className="card p-3 custom-card border-teal mb-4 bg-white shadow-sm"
-                style={{ borderLeft: '4px solid var(--teal-accent)' }}
-              >
-                <div className="d-flex align-items-center justify-content-between mb-2">
-                  <span className="small fw-bold text-dark text-uppercase">
-                    <i className="bi bi-lightning-charge-fill text-warning me-1"></i>Try 1-Click
-                    Instant Demo
-                  </span>
-                  <span className="badge bg-success-subtle text-success small">
-                    No Password Needed
-                  </span>
-                </div>
-                <div className="d-flex flex-wrap gap-2">
-                  <button
-                    className="btn btn-primary btn-sm px-3 py-2 shadow-sm"
-                    onClick={() => handleDemoLogin('patient', 'hero-demo-patient')}
-                    disabled={Boolean(demoLoading['hero-demo-patient'])}
-                  >
-                    {demoLoading['hero-demo-patient'] ? (
-                      <>
-                        <span
-                          className="spinner-border spinner-border-sm me-2"
-                          role="status"
-                          aria-hidden="true"
-                        ></span>
-                        Starting session...
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-person-circle me-1"></i>Launch as Demo Patient
-                      </>
-                    )}
-                  </button>
-                  <button
-                    className="btn btn-teal btn-sm px-3 py-2 shadow-sm"
-                    onClick={() => handleDemoLogin('doctor', 'hero-demo-doctor')}
-                    disabled={Boolean(demoLoading['hero-demo-doctor'])}
-                  >
-                    {demoLoading['hero-demo-doctor'] ? (
-                      <>
-                        <span
-                          className="spinner-border spinner-border-sm me-2"
-                          role="status"
-                          aria-hidden="true"
-                        ></span>
-                        Starting session...
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-hospital me-1"></i>Launch as Demo Doctor
-                      </>
-                    )}
-                  </button>
-                </div>
-                <small className="text-muted mt-2 d-block" style={{ fontSize: '0.78rem' }}>
-                  Instant access pre-loaded with simulated blood tests, active care plans, and
-                  daily tasks.
-                </small>
-              </div>
 
               <div className="d-flex flex-wrap gap-3">
                 <button
@@ -394,8 +306,6 @@ export default function LandingPage() {
         show={loginOpen}
         onClose={() => setLoginOpen(false)}
         onAuthenticated={completeAuth}
-        onDemoLogin={handleDemoLogin}
-        demoLoading={demoLoading}
       />
 
       <RegisterModal
