@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Workspace | CareSync</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="bg-light">
+
+  <!-- Top Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top shadow-sm py-2">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand" href="/doctor">
+        <img src="/img/logo.svg" alt="CareSync Logo" height="38">
+        <span class="badge bg-teal-subtle text-teal fs-6 fw-normal ms-2" style="background-color: #ccfbf1; color: #0f766e;">Clinical Doctor Workspace</span>
+      </a>
+
+      <div class="d-flex align-items-center gap-3">
+        <div class="text-end d-none d-md-block">
+          <span class="fw-bold d-block small" id="doctor-name-display">Dr. Physician</span>
+          <small class="text-muted" id="doctor-specialization-display">Consultant</small>
+        </div>
+        <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="container-fluid px-4 py-4">
+    <div class="row g-4">
+
+      <!-- ============================================== -->
+      <!-- LEFT COLUMN: PATIENT ROSTER                    -->
+      <!-- ============================================== -->
+      <div class="col-lg-4 col-xl-3">
+        <div class="card border-0 shadow-sm custom-card h-100">
+          <div class="card-header bg-white border-bottom p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-people-fill text-teal me-2"></i>Patient Roster
+              </h6>
+              <span class="badge bg-primary rounded-pill small" id="total-patients-badge">0 Patients</span>
+            </div>
+            <!-- Search bar -->
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+              <input type="search" id="patient-search" class="form-control border-start-0 bg-light" placeholder="Search by name or email..." aria-label="Search patients" oninput="searchPatients(this.value)">
+            </div>
+          </div>
+
+          <div class="card-body p-3 overflow-auto" style="max-height: calc(100vh - 200px);">
+            <div id="patients-list-container">
+              <!-- Populated via doctor.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- RIGHT COLUMN: PATIENT 360 & CLINICAL WORKSPACE -->
+      <!-- ============================================== -->
+      <div class="col-lg-8 col-xl-9">
+        
+        <!-- Patient Banner Card -->
+        <div class="card p-3 custom-card mb-4 border-0 shadow-sm bg-white">
+          <div class="row align-items-center g-3">
+            <div class="col-md-8">
+              <div class="d-flex align-items-center gap-3">
+                <div class="stat-icon bg-teal-subtle text-teal fs-3" style="background-color: #ccfbf1; color: #0f766e;">
+                  <i class="bi bi-person-badge"></i>
+                </div>
+                <div>
+                  <div class="d-flex align-items-center gap-2">
+                    <h5 class="fw-bold mb-0" id="workspace-patient-name">Select a Patient</h5>
+                    <span class="badge bg-danger-subtle text-danger" id="workspace-patient-blood">-</span>
+                  </div>
+                  <p class="small text-muted mb-0 mt-1">
+                    <span id="workspace-patient-email">email@example.com</span> • 
+                    <span id="workspace-patient-phone">Phone</span> • 
+                    <span id="workspace-patient-age">Age</span> • 
+                    <span id="workspace-patient-gender">Gender</span>
+                  </p>
+                  <small class="text-secondary"><strong class="text-danger">Known Allergies:</strong> <span id="workspace-patient-allergies">None</span></small>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4 text-md-end">
+              <span class="badge bg-light text-dark border p-2">
+                <i class="bi bi-hospital me-1 text-teal"></i><span id="doctor-hospital-display">Clinic</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clinical Workspace Navigation Tabs -->
+        <ul class="nav nav-tabs mb-3" id="doctor-tabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold" id="reports-view-tab" data-bs-toggle="tab" data-bs-target="#tab-doctor-reports" type="button" role="tab">
+              <i class="bi bi-file-earmark-medical me-1"></i>Patient Reports Vault
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="careplan-builder-tab" data-bs-toggle="tab" data-bs-target="#tab-doctor-prescribe" type="button" role="tab">
+              <i class="bi bi-prescription2 me-1"></i>Prescription & Precaution Builder
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="compliance-view-tab" data-bs-toggle="tab" data-bs-target="#tab-doctor-compliance" type="button" role="tab">
+              <i class="bi bi-activity me-1"></i>Compliance & Adherence Tracker
+            </button>
+          </li>
+        </ul>
+
+        <!-- Workspace Tab Content -->
+        <div class="tab-content">
+
+          <!-- 1. PATIENT REPORTS INSPECTION -->
+          <div class="tab-pane fade show active" id="tab-doctor-reports" role="tabpanel">
+            <div class="card p-3 custom-card mb-3">
+              <h6 class="fw-bold mb-1 text-teal"><i class="bi bi-collection me-2"></i>Patient's Medical Record History</h6>
+              <p class="text-muted small mb-3">Inspect chronological blood tests, scans, and past prescriptions to form an accurate diagnosis.</p>
+              
+              <div id="patient-reports-container">
+                <!-- Populated via doctor.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. PRESCRIPTION & PRECAUTION BUILDER -->
+          <div class="tab-pane fade" id="tab-doctor-prescribe" role="tabpanel">
+            <div class="card p-4 custom-card mb-3">
+              <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                <div>
+                  <h5 class="fw-bold mb-0 text-teal"><i class="bi bi-prescription me-2"></i>Issue Care Plan & Actionable Precautions</h5>
+                  <small class="text-muted">Items entered here will automatically instantiate daily tasks in the patient's interactive checklist.</small>
+                </div>
+              </div>
+
+              <form id="care-plan-form" novalidate>
+                <input type="hidden" id="presc-patient-id">
+
+                <div id="care-plan-error" class="alert alert-danger d-none py-2" role="alert"></div>
+
+                <!-- Diagnosis & Clinical Observations -->
+                <div class="row g-3 mb-4">
+                  <div class="col-md-7">
+                    <label class="form-label small fw-semibold" for="presc-diagnosis">Clinical Diagnosis / Chief Complaint</label>
+                    <input type="text" id="presc-diagnosis" class="form-control" placeholder="e.g. Stage 1 Hypertension, Acute Bronchitis" maxlength="200" required aria-describedby="presc-diagnosis-error">
+                    <div class="invalid-feedback" id="presc-diagnosis-error"></div>
+                  </div>
+                  <div class="col-md-5">
+                    <label class="form-label small fw-semibold" for="presc-followup">Follow-Up Date</label>
+                    <input type="date" id="presc-followup" class="form-control" aria-describedby="presc-followup-error">
+                    <div class="invalid-feedback" id="presc-followup-error"></div>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold" for="presc-notes">Clinical Findings & Doctor Notes</label>
+                    <textarea id="presc-notes" class="form-control" rows="2" maxlength="2000" placeholder="e.g. Patient reports fatigue and elevated evening BP. Advised monitoring."></textarea>
+                  </div>
+                </div>
+
+                <!-- Section: Medications -->
+                <div class="border-top pt-3 mb-4">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0 text-primary">
+                      <i class="bi bi-capsule me-1"></i>Prescribe Medications
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-medicine-row-btn">
+                      <i class="bi bi-plus-lg me-1"></i>Add Another Medicine
+                    </button>
+                  </div>
+                  <div id="medications-container">
+                    <!-- Dynamic medication cards inserted here -->
+                  </div>
+                </div>
+
+                <!-- Section: Precautions & Lifestyle Rules -->
+                <div class="border-top pt-3 mb-4">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0 text-warning text-dark">
+                      <i class="bi bi-shield-exclamation me-1"></i>Mandatory Precautions & Patient Tasks
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-warning text-dark" id="add-precaution-row-btn">
+                      <i class="bi bi-plus-lg me-1"></i>Add Another Precaution
+                    </button>
+                  </div>
+                  <small class="text-muted d-block mb-3">These will be tracked on the patient's dashboard where they can mark them as "Done" or "To Do Yet".</small>
+                  <div id="precautions-container">
+                    <!-- Dynamic precaution cards inserted here -->
+                  </div>
+                </div>
+
+                <div class="text-end border-top pt-3">
+                  <button type="submit" class="btn btn-teal text-white btn-lg fw-semibold" style="background-color: #0f766e;">
+                    <i class="bi bi-send-check me-1"></i>Issue Prescription & Care Plan
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- 3. COMPLIANCE & TASK ADHERENCE TRACKER -->
+          <div class="tab-pane fade" id="tab-doctor-compliance" role="tabpanel">
+            <div id="patient-compliance-container">
+              <!-- Populated via doctor.js -->
+            </div>
+
+            <div class="card p-3 custom-card mt-3">
+              <h6 class="fw-bold text-dark mb-2"><i class="bi bi-clock-history me-1"></i>Past Prescriptions for this Patient:</h6>
+              <div id="patient-prescriptions-history">
+                <!-- Populated via doctor.js -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom JS -->
+  <script src="/js/common.js"></script>
+  <script src="/js/doctor.js"></script>
+</body>
+</html>
